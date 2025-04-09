@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+mysql-connector-python = "*"
+flask-mysql = "*"
+flask-sqlalchemy = "*"
+flask-mysqldb = "*"
+flask-wtf = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.13"

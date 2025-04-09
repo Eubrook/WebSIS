@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Courses List</title>
+        <!-- Link to external CSS file -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    </head>
+<body>
+    <h2>Courses List</h2>
+
+    <form id="search-form">
+        <input type="text" id="search-input" name="search" placeholder="Search courses..." value="{{ request.args.get('search', '') }}">
+        <select id="search-field" name="field">
+            <option value="course_code">Course Code</option>
+            <option value="course_name">Course Name</option>
+            <option value="college_code">College Code</option>
+        </select>
+        <button id="search-button" type="submit">Search</button>
+    </form>
+
+        <!-- Add New Student Form -->
+        <button id="open-modal-btn">Add Course</button>
+
+    <!-- Add Student Modal -->
+            <div id="modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Add New Course</h2>
+                <form method="POST" action="{{ url_for('courses_page.courses') }}">
+                    {{ form.hidden_tag() }}  <!-- CSRF token -->
+                    <div>
+                        {{ form.course_code.label }}<br>
+                        {{ form.course_code }}<br>
+                        {% for error in form.course_code.errors %}
+                            <span class="error">{{ error }}</span><br>
+                        {% endfor %}
+                    </div>
+    
+                    <div>
+                        {{ form.course_name.label }}<br>
+                        {{ form.course_name }}<br>
+                        {% for error in form.course_name.errors %}
+                            <span class="error">{{ error }}</span><br>
+                        {% endfor %}
+                    </div>                
+    
+                    <div>
+                        {{ form.college_code.label }}<br>
+                        <input list="college_codes" name="college_code" id="college_code" value="{{ form.college_code.data or '' }}">
+                        <datalist id="college_codes">
+                            {% for code in college_codes %}
+                                <option value="{{ code }}">
+                            {% endfor %}
+                        </datalist><br>
+                        {% for error in form.college_code.errors %}
+                            <span class="error">{{ error }}</span><br>
+                        {% endfor %}
+                    </div>
+                    
+                    <div>
+                        {{ form.submit }}
+                    </div>
+                </form>
+            </div>
+            </div>
+    
+    
+    
+        <!-- Flash Messages (Notifications) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="notifications">
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+
+
+    <table>
+        <thead id="table-head">
+            <tr>
+                <th>Course Code</th>
+                <th>Course Name</th>
+                <th>College Code</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            {% for course in courses %}
+            <tr>
+                <td>{{ course[0] }}</td>
+                <td>{{ course[1] }}</td>
+                <td>{{ course[2] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

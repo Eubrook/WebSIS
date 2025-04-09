@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <h2>Students List</h2>
+
+    <!-- Search Form -->
+    <form id="search-form" method="GET">
+        <input type="text" name="search" placeholder="Search students..." value="{{ request.args.get('search', '') }}">
+        <select name="field">
+            <option value="id">ID</option>
+            <option value="first_name">First Name</option>
+            <option value="last_name">Last Name</option>
+            <option value="year_level">Year Level</option>
+            <option value="course_code">Course Code</option>
+            <option value="gender">Gender</option>
+        </select>
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- Add New Student -->
+    <button id="open-modal-btn">Add Student</button>
+
+    <!-- Add Student Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Student</h2>
+            <form method="POST" action="{{ url_for('students_page.students') }}">
+                {{ form.hidden_tag() }}
+                {% for field in form if field.name != 'submit' %}
+                    <div>
+                        {{ field.label }}<br>
+                        {{ field }}<br>
+                        {% for error in field.errors %}
+                            <span class="error">{{ error }}</span><br>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                <div>{{ form.submit }}</div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="notifications">
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Students Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Year Level</th>
+                <th>Course Code</th>
+                <th>Gender</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student[0] }}</td>
+                <td>{{ student[1] }}</td>
+                <td>{{ student[2] }}</td>
+                <td>{{ student[3] }}</td>
+                <td>{{ student[4] }}</td>
+                <td>{{ student[5] }}</td>
+                <td>
+                    <!-- Update Button -->
+                    <button class="update-btn"
+                            data-id="{{ student[0] }}"
+                            data-first_name="{{ student[1] }}"
+                            data-last_name="{{ student[2] }}"
+                            data-year_level="{{ student[3] }}"
+                            data-course_code="{{ student[4] }}"
+                            data-gender="{{ student[5] }}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+
+                    <!-- Delete Button -->
+                    <form method="POST" action="{{ url_for('students_page.delete_student', id=student[0]) }}" style="display:inline;">
+                        {{ form.hidden_tag() }}
+                        <button type="submit" onclick="return confirm('Are you sure you want to delete this student?')">
+                            <i class="fas fa-trash-alt" style="color:red;"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Shared Update Modal -->
+    <div id="updateStudentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-update">&times;</span>
+            <h2>Update Student</h2>
+            <form method="POST" action="{{ url_for('students_page.update_students') }}">
+                {{ update_form.hidden_tag() }}
+
+                <div>
+                    {{ update_form.id.label }}
+                    {{ update_form.id(id="update-id-display", readonly=True) }}
+                </div>
+                <div>
+                    {{ update_form.first_name.label }}
+                    {{ update_form.first_name(id="update-first-name") }}
+                </div>
+                <div>
+                    {{ update_form.last_name.label }}
+                    {{ update_form.last_name(id="update-last-name") }}
+                </div>
+                <div>
+                    {{ update_form.year_level.label }}
+                    {{ update_form.year_level(id="update-year-level", type="number", min="1", max="10") }}
+                </div>
+                <div>
+                    {{ update_form.course_code.label }}
+                    <input 
+                        type="text"
+                        id="update-course-code"
+                        name="{{ update_form.course_code.name }}"
+                        list="update-course-codes"
+                        value="{{ update_form.course_code.data or '' }}"
+                        required>
+                    <datalist id="update-course-codes">
+                        {% for code in course_codes %}
+                            <option value="{{ code }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    {{ update_form.gender.label }}
+                    {{ update_form.gender(id="update-gender") }}
+                </div>
+                <div>
+                    {{ update_form.submit }}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

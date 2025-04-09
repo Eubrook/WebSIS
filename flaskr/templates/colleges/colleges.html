@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Colleges List</title>
+        <!-- Link to external CSS file -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    </head>
+    
+<body>
+    <h2>Colleges List</h2>
+
+    <form id="search-form">
+        <input type="text" id="search-input" name="search" placeholder="Search colleges..." value="{{ request.args.get('search', '') }}">
+        <select id="search-field" name="field">
+            <option value="college_code">College Code</option>
+            <option value="college_name">College Name</option>
+        </select>
+        <button id="search-button" type="submit">Search</button>
+    </form>
+
+            <button id="open-modal-btn">Add College</button>
+
+            <!-- Add Student Modal -->
+                    <div id="modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h2>Add New College</h2>
+                        <form method="POST" action="{{ url_for('colleges_page.colleges') }}">
+                            {{ form.hidden_tag() }}  <!-- CSRF token -->
+                            <div>
+                                {{ form.college_code.label }}<br>
+                                {{ form.college_code }}<br>
+                                {% for error in form.college_code.errors %}
+                                    <span class="error">{{ error }}</span><br>
+                                {% endfor %}
+                            </div>
+            
+                            <div>
+                                {{ form.college_name.label }}<br>
+                                {{ form.college_name }}<br>
+                                {% for error in form.college_name.errors %}
+                                    <span class="error">{{ error }}</span><br>
+                                {% endfor %}
+                            </div>                
+                            
+                            <div>
+                                {{ form.submit }}
+                            </div>
+                        </form>
+                    </div>
+                    </div>
+                
+                <!-- Flash Messages (Notifications) -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="notifications">
+                            {% for category, message in messages %}
+                                <div class="alert {{ category }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+        
+        
+    <table>
+        <thead id="table-head">
+            <tr>
+                <th>College Code</th>
+                <th>College Name</th>
+   
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            {% for college in colleges %}
+            <tr>
+                <td>{{ college[0] }}</td>
+                <td>{{ college[1] }}</td>
+                
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

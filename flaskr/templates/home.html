@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Student Information System</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .tab { display: inline-block; padding: 10px; cursor: pointer; border: 1px solid #ccc; }
+        .tab:hover { background-color: #f0f0f0; }
+        .tab-content { display: none; padding: 20px; border: 1px solid #ccc; }
+        .active { display: block; }
+    </style>
+</head>
+<body>
+    <h1>Web Student Information System</h1>
+    
+    <div>
+      <a href="{{ url_for('students') }}" class="tab">Student</a>
+      <a href="{{ url_for('colleges') }}" class="tab">College</a>
+      <a href="{{ url_for('courses') }}" class="tab">Courses</a>
+    </div>
+    
+    <div id="student" class="tab-content active">
+        <h2>Student Information</h2>
+        <p>Details about students go here.</p>
+    </div>
+    <div id="college" class="tab-content">
+        <h2>College Information</h2>
+        <p>Details about colleges go here.</p>
+    </div>
+    <div id="courses" class="tab-content">
+        <h2>Course Information</h2>
+        <p>Details about courses go here.</p>
+    </div>
+    
+    <script>
+        function showTab(tabId) {
+            var contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
