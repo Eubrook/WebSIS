@@ -347,3 +347,82 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    // Handle preview and upload logic
+    function handleProfilePicChange(inputId, previewId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+
+        input.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Allow clicking the preview to trigger file select
+        preview.addEventListener('click', function() {
+            input.click();
+        });
+
+
+
+        // Allow clicking the preview to trigger file select
+        preview.addEventListener('click', function() {
+            input.click();
+        });
+    }
+
+    // Initialize event listeners
+    handleProfilePicChange('add-profile-pic-input', 'add-profile-pic-preview');
+    handleProfilePicChange('update-profile-pic-input', 'update-profile-pic-preview');
+
+        // ================== Profile Picture Modal ==================
+    const profilePicModal = document.getElementById('profile-pic-modal');
+    const profilePicModalImg = document.getElementById('profile-pic-modal-img');
+    const closeProfilePicModal = document.getElementById('close-profile-pic-modal');
+
+    document.querySelectorAll('.clickable-pic').forEach(img => {
+        img.addEventListener('click', function () {
+            profilePicModalImg.src = this.src;
+            profilePicModal.style.display = 'block';
+        });
+    });
+
+    closeProfilePicModal.addEventListener('click', function () {
+        profilePicModal.style.display = 'none';
+    });
+
+    // Close modal if clicking outside image
+    window.addEventListener('click', function (e) {
+        if (e.target === profilePicModal) {
+            profilePicModal.style.display = 'none';
+        }
+    });
+
+
+
+        // Handle opening the image in modal
+        document.querySelectorAll('.profile-pic').forEach(img => {
+            img.addEventListener('click', function() {
+                const modal = document.getElementById('imageModal');
+                const modalImg = document.getElementById('modalImage');
+                modal.style.display = "block";
+                modalImg.src = this.src;
+            });
+        });
+
+        // Handle closing the modal
+        document.querySelector('.image-modal .close').addEventListener('click', function() {
+            document.getElementById('imageModal').style.display = "none";
+        });
+
+        // Close modal when clicking outside the image
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = "none";
+            }
+        });

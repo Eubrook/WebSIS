@@ -3,7 +3,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_mysqldb import MySQL
 from flaskr.mysql__init__ import create_db
 from flask_bootstrap import Bootstrap
-from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, SECRET_KEY 
+from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, SECRET_KEY, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_API_UPLOAD_PRESET 
 # BOOTSTRAP_SERVE_LOCAL
 
 
@@ -23,6 +23,10 @@ def create_app():
     app.config['MYSQL_USER'] = DB_USERNAME
     app.config['MYSQL_PASSWORD'] = DB_PASSWORD
     app.config['MYSQL_DB'] = DB_NAME
+    app.config['CLOUDINARY_CLOUD_NAME'] = CLOUDINARY_CLOUD_NAME
+    app.config['CLOUDINARY_API_KEY'] = CLOUDINARY_API_KEY
+    app.config['CLOUDINARY_API_SECRET'] = CLOUDINARY_API_SECRET
+    app.config['CLOUDINARY_API_UPLOAD_PRESET'] = CLOUDINARY_API_UPLOAD_PRESET 
  
     mysql.init_app(app)
     CSRFProtect(app)
@@ -74,7 +78,8 @@ def create_app():
     
     @app.route('/students')
     def students():
-        return render_template('students/students.html')
+        return render_template('students/students.html', cloud_name=current_app.config['CLOUDINARY_CLOUD_NAME'], 
+                                upload_preset=current_app.config['CLOUDINARY_API_UPLOAD_PRESET'])
     
     @app.route('/colleges')
     def colleges():

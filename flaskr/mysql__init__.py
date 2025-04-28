@@ -45,6 +45,7 @@ def create_db():
             year_level INT NOT NULL, 
             course_code VARCHAR(10),
             gender CHAR(6) NOT NULL,
+            prof_pic VARCHAR(500),
             PRIMARY KEY (id),
             FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE SET NULL ON UPDATE CASCADE
         )

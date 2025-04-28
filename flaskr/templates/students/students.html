@@ -38,9 +38,15 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Add New Student</h2>
-                <form method="POST" action="{{ url_for('students_page.students') }}">
+                <form method="POST" action="{{ url_for('students_page.students') }}" enctype="multipart/form-data">
                     {{ form.hidden_tag() }}
 
+                    <div class="profile-upload">
+                        <img id="add-profile-pic-preview" src="{{ url_for('static', filename='images/default-avatar.png') }}"class="profile-pic-preview" alt="Profile Picture Preview">
+                        <input type="file" id="add-profile-pic-input" name="prof_pic" accept="image/*">
+                    </div>
+                    
+                    
                     <div>
                         {{ form.id.label }}
                         {{ form.id(
@@ -99,6 +105,22 @@
             </div>
         </div>
 
+                <!-- Profile Picture Modal -->
+        <div id="profile-pic-modal" class="modal" style="display:none;">
+            <div class="modal-content" style="position: relative; text-align: center;">
+            <span id="close-profile-pic-modal" class="close" style="position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; color: #aaa; cursor: pointer;">&times;</span>
+            <img id="profile-pic-modal-img" src="" alt="Full Profile Pic" style="max-width: 90%; max-height: 80vh; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+            </div>
+        </div>
+    
+
+            <!-- Image Preview Modal -->
+        <div id="imageModal" class="image-modal">
+            <span class="close">&times;</span>
+            <img class="modal-content" id="modalImage">
+        </div>
+        >
+        
 
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -138,6 +160,7 @@
         <thead id="table-head">
             <tr>
                 <th>ID</th>
+                <th>Photo</th>
                 <th>First Name</th>
                 <th>Last Name</th>
                 <th>Year Level</th>
@@ -150,6 +173,15 @@
             {% for student in students %}
             <tr>
                 <td>{{ student[0] }}</td>
+                <td>
+                    {% if student[6] %}
+                    <img src="{{ student[6] }}" alt="Profile Pic" class="profile-pic" style="height:50px; width:50px; object-fit:cover; border-radius:50%;">
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="Default Avatar" class="profile-pic" style="height:50px; width:50px; object-fit:cover; border-radius:50%;">
+                {% endif %}
+                
+                </td>
+                
                 <td>{{ student[1] }}</td>
                 <td>{{ student[2] }}</td>
                 <td>{{ student[3] }}</td>
@@ -159,6 +191,7 @@
                     <!-- Update Button -->
                     <button class="update-btn custom-btn" data-entity="student"
                             data-id="{{ student[0] }}"
+                            data-prof-pic = "{{ student[6] }}"
                             data-first_name="{{ student[1] }}"
                             data-last_name="{{ student[2] }}"
                             data-year_level="{{ student[3] }}"
@@ -189,11 +222,15 @@
             <div class="modal-content">
                 <span class="close-update">&times;</span>
                 <h2>Update Student</h2>
-                <form method="POST" action="{{ url_for('students_page.update_students') }}">
+                <form method="POST" action="{{ url_for('students_page.update_students') }}" enctype="multipart/form-data">
                     {{ update_form.csrf_token }}
                     {{ update_form.original_id(id="original-id") }}
-
-
+                    
+                    <div class="profile-upload">
+                        <img id="update-profile-pic-preview" src="{{ url_for('static', filename='images/default-avatar.png') }}" class="profile-pic-preview" alt="Profile Picture Preview">
+                        <input type="file" id="update-profile-pic-input" name="prof_pic" accept="image/*">
+                    </div>
+                    
                     <div>
                         {{ update_form.id.label }}
                         {{ update_form.id(

@@ -2,9 +2,9 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 import json
 from flaskr import mysql
 from flask import render_template, request, redirect, url_for, flash
-from flaskr import mysql
 from .forms import AddStudentForm, UpdateStudentForm # Import the form class
-
+import cloudinary
+import cloudinary.uploader
 
 
 students_page = Blueprint('students_page', __name__)
@@ -14,18 +14,15 @@ students_page = Blueprint('students_page', __name__)
 def students():
     cur = mysql.connection.cursor()
 
-    # Get all course codes from the database
+    # Get all course codes
     cur.execute("SELECT course_code FROM courses")
     course_codes = [row[0] for row in cur.fetchall()]
 
-    # Initialize form and set choices
-    # Initialize forms
-    form = UpdateStudentForm()
-    update_form = UpdateStudentForm()  # <-- Add this
+    form = AddStudentForm()
+    update_form = UpdateStudentForm()
     form.course_code.choices = [(code, code) for code in course_codes]
-    update_form.course_code.choices = [(code, code) for code in course_codes]  # 
+    update_form.course_code.choices = [(code, code) for code in course_codes]
 
-    # Handle POST (form submission)
     if request.method == 'POST' and form.validate_on_submit():
         student_id = form.id.data
         first_name = form.first_name.data
@@ -33,22 +30,31 @@ def students():
         year_level = form.year_level.data
         course_code = form.course_code.data
         gender = form.gender.data
+        prof_pic = form.prof_pic.data
+
+        # Handle file upload
+        file = request.files.get('prof_pic')
+        if file and file.filename != '':
+            print(f"File received: {file.filename}")
+            upload_result = cloudinary.uploader.upload(file)
+            prof_pic = str(upload_result.get('secure_url'))
+            print(f"Cloudinary URL: {prof_pic}")  # Debugging the URL
+
+
 
         # Insert the student
         cur.execute("""
-            INSERT INTO students (id, first_name, last_name, year_level, course_code, gender)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (student_id, first_name, last_name, year_level, course_code, gender))
+            INSERT INTO students (id, first_name, last_name, year_level, course_code, gender, prof_pic)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (student_id, first_name, last_name, year_level, course_code, gender, prof_pic))
         mysql.connection.commit()
         flash('Student added successfully!', 'success')
         return redirect(url_for('students_page.students'))
 
-    # Handle GET (including search)
+    # Handle GET (and search)
     search_query = request.args.get('search', '')
     field = request.args.get('field', 'id')
-
-    #Protect against SQL injection in search field
-    allowed_fields = ['id', 'first_name', 'last_name', 'year_level', 'course_code', 'gender']
+    allowed_fields = ['id', 'first_name', 'last_name', 'year_level', 'course_code', 'gender', 'prof_pic']
     if field not in allowed_fields:
         field = 'id'
 
@@ -61,7 +67,6 @@ def students():
     cur.close()
 
     return render_template('students/students.html', students=students, form=form, update_form=update_form, course_codes=course_codes)
-
 
 
 @students_page.route('/search_students', methods=['GET'])
@@ -121,6 +126,7 @@ def all_students():
             'year_level': student[3],
             'course_code': student[4],
             'gender': student[5],
+            'prof_pic': student[6]
         }
         for student in students_data
     ]
@@ -143,28 +149,39 @@ def delete_student(id):
 def update_students():
     cur = mysql.connection.cursor()
 
-    # Get all course codes
     cur.execute("SELECT course_code FROM courses")
     course_codes = [row[0] for row in cur.fetchall()]
 
-    # Initialize forms first
     add_form = AddStudentForm()
     update_form = UpdateStudentForm()
-
-    # Then assign choices
     add_form.course_code.choices = [(code, code) for code in course_codes]
     update_form.course_code.choices = [(code, code) for code in course_codes]
-
 
     if update_form.validate_on_submit():
         original_id = request.form.get("original_id", "").strip()
         new_id = update_form.id.data.strip()
         print("Form data received:", request.form)
-        print("Original ID:", request.form.get("original_id"))
-        print("New ID:", update_form.id.data)
 
-    
+        # Handle file upload
+        file = request.files.get('prof_pic')
+        prof_pic = None
+        if file and file.filename != '':
+            import cloudinary.uploader
+            upload_result = cloudinary.uploader.upload(file)
+            prof_pic = str(upload_result.get('secure_url'))  # <-- here too
+
+        else:
+            # No new file uploaded, keep existing profile picture
+            cur.execute("SELECT prof_pic FROM students WHERE id = %s", (original_id,))
+            result = cur.fetchone()
+            if result and isinstance(result[0], bytes):
+                prof_pic = result[0].decode('utf-8')  # Decode bytes to string
+            else:
+                prof_pic = result[0] if result else None
+
+
         print(f"Updating student with id: {update_form.id.data}")
+
         cur.execute("""
             UPDATE students
             SET id = %s,
@@ -172,7 +189,8 @@ def update_students():
                 last_name = %s,
                 year_level = %s,
                 course_code = %s,
-                gender = %s
+                gender = %s,
+                prof_pic = %s
             WHERE id = %s
         """, (
             new_id,
@@ -181,6 +199,7 @@ def update_students():
             update_form.year_level.data,
             update_form.course_code.data,
             update_form.gender.data,
+            prof_pic,
             original_id
         ))
 
@@ -188,14 +207,12 @@ def update_students():
         print(f"Rows affected by update: {affected_rows}")
         mysql.connection.commit()
         flash('Student updated successfully!', 'success')
-        return redirect(url_for('students_page.students'))  # Redirect after successful POST
+        return redirect(url_for('students_page.students'))
     else:
         flash('Error updating student.', 'error')
 
-        # Fetch students so the template can render properly
         cur.execute("SELECT * FROM students")
         students = cur.fetchall()
-
         cur.close()
 
     return render_template(
@@ -207,6 +224,7 @@ def update_students():
     )
 
 
+
 @students_page.route('/upload_profile', methods=['POST'])
 def upload_profile():
     file = request.files['profile_picture']
@@ -215,6 +233,7 @@ def upload_profile():
 
     if file:
         upload_result = cloudinary.uploader.upload(file)
+        prof_pic = str(upload_result.get('secure_url'))
         image_url = upload_result['secure_url']
         public_id = upload_result['public_id']
 

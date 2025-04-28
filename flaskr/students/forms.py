@@ -1,7 +1,6 @@
-
 import re
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField, ValidationError, IntegerField, HiddenField
+from wtforms import StringField, SelectField, SubmitField, ValidationError, IntegerField, HiddenField, FileField
 from wtforms.validators import DataRequired, NumberRange
 from datetime import datetime
 from flaskr import mysql
@@ -14,10 +13,11 @@ class AddStudentForm(FlaskForm):
         DataRequired(), NumberRange(min=1, max=10, message="Year level must be between 1 and 10")])
     course_code = StringField('Course Code', validators=[DataRequired()])
     gender = SelectField('Gender', choices=[('Male', 'Male'), ('Female', 'Female')], validators=[DataRequired()])
+    prof_pic = FileField('Profile Picture')
     submit = SubmitField('Add Student')
 
     def validate_id(form, field):
-        pattern = r'^\d{4}-\d{4}$'  #allowed pattern for id
+        pattern = r'^\d{4}-\d{4}$'  # allowed pattern for id
         if not re.match(pattern, field.data):
             raise ValidationError("ID must be in the format YYYY-NNNN (e.g., 2023-1234)")
         year = int(field.data.split('-')[0])
@@ -34,7 +34,6 @@ class AddStudentForm(FlaskForm):
             raise ValidationError("Course code does not exist. Please add it first.")
 
 
-
 class UpdateStudentForm(FlaskForm):
     original_id = HiddenField('Original ID')
     id = StringField('ID', validators=[DataRequired()])
@@ -44,10 +43,11 @@ class UpdateStudentForm(FlaskForm):
         DataRequired(), NumberRange(min=1, max=10, message="Year level must be between 1 and 10")])
     course_code = StringField('Course Code', validators=[DataRequired()])
     gender = SelectField('Gender', choices=[('Male', 'Male'), ('Female', 'Female')], validators=[DataRequired()])
+    prof_pic = FileField('Profile Picture')
     submit = SubmitField('Update Student')
 
     def validate_id(form, field):
-        pattern = r'^\d{4}-\d{4}$'  #allowed pattern for id
+        pattern = r'^\d{4}-\d{4}$'  # allowed pattern for id
         if not re.match(pattern, field.data):
             raise ValidationError("ID must be in the format YYYY-NNNN (e.g., 2023-1234)")
         year = int(field.data.split('-')[0])
