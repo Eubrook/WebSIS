@@ -155,7 +155,16 @@ def update_students():
     add_form.course_code.choices = [(code, code) for code in course_codes]
     update_form.course_code.choices = [(code, code) for code in course_codes]
 
+
     if update_form.validate_on_submit():
+        original_id = request.form.get("original_id", "").strip()
+        new_id = update_form.id.data.strip()
+        print("Form data received:", request.form)
+        print("Original ID:", request.form.get("original_id"))
+        print("New ID:", update_form.id.data)
+
+    
+        print(f"Updating student with id: {update_form.id.data}")
         cur.execute("""
             UPDATE students
             SET id = %s,
@@ -166,23 +175,27 @@ def update_students():
                 gender = %s
             WHERE id = %s
         """, (
-            update_form.id.data,
+            new_id,
             update_form.first_name.data,
             update_form.last_name.data,
             update_form.year_level.data,
             update_form.course_code.data,
             update_form.gender.data,
-            update_form.id.data
+            original_id
         ))
+
+        affected_rows = cur.rowcount
+        print(f"Rows affected by update: {affected_rows}")
         mysql.connection.commit()
         flash('Student updated successfully!', 'success')
         return redirect(url_for('students_page.students'))  # Redirect after successful POST
     else:
         flash('Error updating student.', 'error')
 
-        # ⬇️ Fetch students so the template can render properly
+        # Fetch students so the template can render properly
         cur.execute("SELECT * FROM students")
         students = cur.fetchall()
+
         cur.close()
 
     return render_template(

@@ -38,9 +38,39 @@ def create_app():
     
     bootstrap.init_app(app)
 
+    def get_all_students():
+        cur = mysql.connection.cursor()
+        cur.execute('SELECT * FROM students')
+        students = cur.fetchall()
+        cur.close()
+        return students
+
+    def get_all_colleges():
+        cur = mysql.connection.cursor()
+        cur.execute('SELECT * FROM colleges')
+        colleges = cur.fetchall()
+        cur.close()
+        return colleges
+
+    def get_all_courses():
+        cur = mysql.connection.cursor()
+        cur.execute('SELECT * FROM courses')
+        courses = cur.fetchall()
+        cur.close()
+        return courses
+
+    
     @app.route('/')
     def main_page():
-        return render_template('home.html')
+        students = get_all_students()
+        colleges = get_all_colleges()
+        courses = get_all_courses()
+        total_students = len(students)
+        total_colleges = len(colleges)
+        total_courses = len(courses)
+        return render_template('home.html', students=students, colleges=colleges, courses=courses,
+                                total_students=total_students, total_colleges=total_colleges, total_courses=total_courses)
+
     
     @app.route('/students')
     def students():

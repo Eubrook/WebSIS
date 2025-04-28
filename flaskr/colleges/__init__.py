@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, session
 import json
 from flaskr import mysql
-from .forms import AddCollegeForm
+from .forms import AddCollegeForm, UpdateCollegeForm
 
 colleges_page = Blueprint('colleges_page', __name__)
 
@@ -11,6 +11,7 @@ def colleges():
 
     cur = mysql.connection.cursor()
     form = AddCollegeForm()
+    update_form = UpdateCollegeForm()
 
     # Handle POST (form submission)
     if request.method == 'POST' and form.validate_on_submit():
@@ -50,7 +51,7 @@ def colleges():
     colleges = cur.fetchall()
     cur.close()
 
-    return render_template('colleges/colleges.html', colleges=colleges, form=form)
+    return render_template('colleges/colleges.html', colleges=colleges, form=form, update_form=update_form)
 
 
 
@@ -93,6 +94,8 @@ def search_colleges():
         print("Error:", e)
         return Response("Error occurred", status=500)
 
+
+
 @colleges_page.route('/all_colleges', methods=['GET'])
 def all_colleges():
     cur = mysql.connection.cursor()
@@ -109,3 +112,67 @@ def all_colleges():
     ]
     
     return Response(json.dumps(colleges_list), mimetype='application/json')
+
+
+
+@colleges_page.route('/colleges/delete/<string:college_code>', methods=['POST'])
+def delete_college(college_code):
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM colleges WHERE college_code = %s", (college_code,))
+    mysql.connection.commit()
+    cur.close()
+    flash('College deleted successfully!', 'success')
+    return redirect(url_for('colleges_page.colleges'))
+
+
+
+
+@colleges_page.route('/colleges/update_colleges', methods=['GET', 'POST'])
+def update_colleges():
+    cur = mysql.connection.cursor()
+    
+    add_form = AddCollegeForm()
+    update_form = UpdateCollegeForm()
+
+    # Set original_college_code data for validation
+    if request.method == 'POST':
+        update_form.original_college_code.data = request.form.get('original_college_code')
+
+    if update_form.validate_on_submit():
+
+        original_college_code = request.form.get("original_college_code", "").strip()
+        new_college_code = update_form.college_code.data.strip()
+        
+        print(f"Updating college with original_college_code: {update_form.original_college_code.data}")
+        cur.execute("""
+            UPDATE colleges
+            SET college_code = %s,
+                college_name = %s
+            WHERE college_code = %s
+        """, (
+                new_college_code,
+                update_form.college_name.data,
+                original_college_code
+        ))
+        affected_rows = cur.rowcount
+        print(f"Rows affected by update: {affected_rows}")
+        mysql.connection.commit()
+        cur.close()
+        flash('College updated successfully!', 'success')
+        return redirect(url_for('colleges_page.colleges'))  # Redirect after successful POST
+    else:
+        if request.method == 'POST':
+            flash('Error updating college.', 'error')
+
+        # Fetch colleges so the template can render properly
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT * FROM colleges")
+        colleges = cur.fetchall()
+        cur.close()
+   
+    return render_template(
+        'colleges/colleges.html',
+        colleges=colleges,
+        form=add_form,
+        update_form=update_form
+    )

@@ -6,21 +6,27 @@
         <title>Colleges List</title>
         <!-- Link to external CSS file -->
         <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     </head>
     
 <body>
-    <h2>Colleges List</h2>
 
-    <form id="search-form">
-        <input type="text" id="search-input" name="search" placeholder="Search colleges..." value="{{ request.args.get('search', '') }}">
-        <select id="search-field" name="field">
-            <option value="college_code">College Code</option>
-            <option value="college_name">College Name</option>
-        </select>
-        <button id="search-button" type="submit">Search</button>
-    </form>
-
-            <button id="open-modal-btn">Add College</button>
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="navbar-left">
+                <a href="{{ url_for('main_page') }}">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+                </a>
+            </div>
+            <div class="navbar-right">
+                <a href="{{ url_for('students_page.students') }}">Students</a>
+                <a href="{{ url_for('colleges_page.colleges') }}">Colleges</a>
+                <a href="{{ url_for('courses_page.courses') }}">Courses</a>
+            </div>
+        </nav>
+        
 
             <!-- Add Student Modal -->
                     <div id="modal" class="modal">
@@ -31,15 +37,15 @@
                             {{ form.hidden_tag() }}  <!-- CSRF token -->
                             <div>
                                 {{ form.college_code.label }}<br>
-                                {{ form.college_code }}<br>
+                                {{ form.college_code(autocomplete="off")}}<br>
                                 {% for error in form.college_code.errors %}
                                     <span class="error">{{ error }}</span><br>
-                                {% endfor %}
+                                {% endfor %} 
                             </div>
             
                             <div>
                                 {{ form.college_name.label }}<br>
-                                {{ form.college_name }}<br>
+                                {{ form.college_name(autocomplete="off") }}<br>
                                 {% for error in form.college_name.errors %}
                                     <span class="error">{{ error }}</span><br>
                                 {% endfor %}
@@ -65,12 +71,32 @@
                     {% endif %}
                 {% endwith %}
         
+        <h1 class="page-name">Colleges List</h1>
+    
+        <div class="table-controls">
+            <form id="search-form" method="GET" class="search-section">
+                <input id="search-input" class="search-bar search-input" type="text" name="search" placeholder="Search colleges..." value="{{ request.args.get('search', '') }}">
+                <select id="search-field" class="search-select" name="search-field">
+                    <option value="college_code">College Code</option>
+                    <option value="college_name">College Name</option>
+                </select>
+                
+                <button id="search-button" class="custom-btn" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+                
+            </form>
+                    <!-- Add New Student Form -->
+        <button id="open-modal-btn" class="custom-btn">Add College</button>
+        </div>
+
         
     <table>
         <thead id="table-head">
             <tr>
                 <th>College Code</th>
                 <th>College Name</th>
+                <th>Actions</th>
    
             </tr>
         </thead>
@@ -79,14 +105,55 @@
             <tr>
                 <td>{{ college[0] }}</td>
                 <td>{{ college[1] }}</td>
+                <td>
+                    <button class="update-btn custom-btn" data-entity="college" 
+                    data-college-code="{{ college[0] }}" 
+                    data-college-name="{{ college[1] }}">
+                    <i class="fas fa-edit"></i>
+                    </button>
+
+                    <form action="{{ url_for('colleges_page.delete_college', college_code=college[0]) }}" method="post" class="delete-form" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="custom-btn btn-outline-danger delete-btn">
+                            <i class="fa fa-trash text-danger" style="color:red;" ></i>
+                        </button>
+                    </form>
+                            
+                    
+                      
+                  </td>  
                 
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    
-    
+     
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
-</html>
+        <!-- Update College Modal -->
+        <div id="updateCollegeModal" class="modal">
+            <div class="modal-content">
+                <span class="close-update">&times;</span>
+                <h2>Update College</h2>
+
+                <form method="POST" action="{{ url_for('colleges_page.update_colleges') }}">
+                    {{ update_form.csrf_token }}
+                    {{ update_form.original_college_code(id="original-college-code") }}
+
+                    <div>
+                        {{ update_form.college_code.label }}
+                        {{ update_form.college_code(id="update-college-code", autocomplete="off") }}
+                    </div>
+                    <div>
+                        {{ update_form.college_name.label }}
+                        {{ update_form.college_name(id="update-college-name", autocomplete="off") }}
+                    </div>
+                    <div>
+                        {{ update_form.submit }}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+        </body>
+        </html>

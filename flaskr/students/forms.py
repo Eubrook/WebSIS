@@ -1,7 +1,7 @@
 
 import re
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField, ValidationError, IntegerField
+from wtforms import StringField, SelectField, SubmitField, ValidationError, IntegerField, HiddenField
 from wtforms.validators import DataRequired, NumberRange
 from datetime import datetime
 from flaskr import mysql
@@ -34,7 +34,9 @@ class AddStudentForm(FlaskForm):
             raise ValidationError("Course code does not exist. Please add it first.")
 
 
+
 class UpdateStudentForm(FlaskForm):
+    original_id = HiddenField('Original ID')
     id = StringField('ID', validators=[DataRequired()])
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])

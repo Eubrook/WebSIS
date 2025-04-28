@@ -6,22 +6,27 @@
         <title>Courses List</title>
         <!-- Link to external CSS file -->
         <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     </head>
 <body>
-    <h2>Courses List</h2>
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="navbar-left">
+                <a href="{{ url_for('main_page') }}">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+                </a>
+            </div>
+            <div class="navbar-right">
+                <a href="{{ url_for('students_page.students') }}">Students</a>
+                <a href="{{ url_for('colleges_page.colleges') }}">Colleges</a>
+                <a href="{{ url_for('courses_page.courses') }}">Courses</a>
+            </div>
+        </nav>
+        
 
-    <form id="search-form">
-        <input type="text" id="search-input" name="search" placeholder="Search courses..." value="{{ request.args.get('search', '') }}">
-        <select id="search-field" name="field">
-            <option value="course_code">Course Code</option>
-            <option value="course_name">Course Name</option>
-            <option value="college_code">College Code</option>
-        </select>
-        <button id="search-button" type="submit">Search</button>
-    </form>
 
-        <!-- Add New Student Form -->
-        <button id="open-modal-btn">Add Course</button>
 
     <!-- Add Student Modal -->
             <div id="modal" class="modal">
@@ -32,7 +37,7 @@
                     {{ form.hidden_tag() }}  <!-- CSRF token -->
                     <div>
                         {{ form.course_code.label }}<br>
-                        {{ form.course_code }}<br>
+                        {{ form.course_code (autocomplete="off")}}<br>
                         {% for error in form.course_code.errors %}
                             <span class="error">{{ error }}</span><br>
                         {% endfor %}
@@ -40,24 +45,33 @@
     
                     <div>
                         {{ form.course_name.label }}<br>
-                        {{ form.course_name }}<br>
+                        {{ form.course_name (autocomplete="off")}}<br>
                         {% for error in form.course_name.errors %}
                             <span class="error">{{ error }}</span><br>
                         {% endfor %}
                     </div>                
-    
                     <div>
-                        {{ form.college_code.label }}<br>
-                        <input list="college_codes" name="college_code" id="college_code" value="{{ form.college_code.data or '' }}">
-                        <datalist id="college_codes">
+                        {{ form.college_code.label }}
+                        <input 
+                            type="text"
+                            id="college-code"
+                            name="{{ form.college_code.name }}"
+                            list="college-codes"
+                            value="{{ form.college_code.data or '' }}"
+                            required
+                            pattern="^({{ college_codes | join('|') }})$"
+                            title="The couse code does not exist. Please add it first."
+                            autocomplete="off"
+                            oninvalid="this.setCustomValidity('Please select a valid college code.')"
+                            oninput="this.setCustomValidity('')">
+                            
+                        <datalist id="college-codes">
                             {% for code in college_codes %}
                                 <option value="{{ code }}">
                             {% endfor %}
-                        </datalist><br>
-                        {% for error in form.college_code.errors %}
-                            <span class="error">{{ error }}</span><br>
-                        {% endfor %}
+                        </datalist>
                     </div>
+                    
                     
                     <div>
                         {{ form.submit }}
@@ -65,8 +79,7 @@
                 </form>
             </div>
             </div>
-    
-    
+     
     
         <!-- Flash Messages (Notifications) -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -81,7 +94,28 @@
             {% endif %}
         {% endwith %}
 
+        <h1 class="page-name">Courses List</h1>
+        
+        <div class="table-controls">
+            <form id="search-form" method="GET" class="search-section">
+                <input id="search-input" class="search-bar search-input" type="text" name="search" placeholder="Search courses..." value="{{ request.args.get('search', '') }}">
+                
+                <select id="search-field" class="search-select" name="search-field">
+                    <option value="course_code">Course Code</option>
+                    <option value="course_name">Course Name</option>
+                    <option value="college_code">College Code</option>
+                </select>
+                
+                <button id="search-button" class="custom-btn" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+                
+            </form>
+                  <!-- Add New Student Form -->
+        <button id="open-modal-btn" class="custom-btn">Add Course</button>
+        </div>
 
+            
 
     <table>
         <thead id="table-head">
@@ -89,6 +123,7 @@
                 <th>Course Code</th>
                 <th>Course Name</th>
                 <th>College Code</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody id="table-body">
@@ -97,13 +132,81 @@
                 <td>{{ course[0] }}</td>
                 <td>{{ course[1] }}</td>
                 <td>{{ course[2] }}</td>
+                <!-- Update Button -->
+                <td>
+                    <button class="update-btn custom-btn" data-entity="course" 
+                    data-course-code="{{ course[0] }}" 
+                    data-course-name="{{ course[1] }}" 
+                    data-college-code="{{ course[2] }}">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    </button>
+                    
+                    <form action="{{ url_for('courses_page.delete_course', course_code=course[0]) }}" method="post" class="delete-form" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="custom-btn btn-outline-danger delete-btn">
+                            <i class="fa fa-trash text-danger" style="color:red;" ></i>
+                        </button>
+                    </form>
+                                      
+                    
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    
-    
+    <!-- Shared Update Modal -->
+    <div id="updateCourseModal" class="modal">
+        <div class="modal-content">
+            <span class="close-update">&times;</span>
+            <h2>Update Course</h2>
+            <form method="POST" action="{{ url_for('courses_page.update_courses') }}">
+                {{ update_form.csrf_token }}
+                {{ update_form.original_course_code(id="original-course-code") }}
 
+                <div>
+                    {{ update_form.course_code.label }}
+                    {{ update_form.course_code(id="update-course-code", autocomplete="off") }}
+                </div>
+                <div>
+                    {{ update_form.course_name.label }}
+                    {{ update_form.course_name(id="update-course-name", autocomplete="off") }}
+                </div>
+                <div>
+                    {{ update_form.college_code.label }}
+                    <input 
+                        type="text"
+                        id="update-college-code"
+                        name="{{ update_form.college_code.name }}"
+                        list="update-college-codes"
+                        value="{{ update_form.college_code.data or '' }}"
+                        required
+                        pattern="^({{ college_codes | join('|') }})$"
+                        title="The couse code does not exist. Please add it first."
+                        autocomplete="off"
+                        oninvalid="this.setCustomValidity('Please select a valid college code.')"
+                        oninput="this.setCustomValidity('')">
+                        
+                    <datalist id="update-college-codes">
+                        {% for code in college_codes %}
+                            <option value="{{ code }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    {{ update_form.submit }}
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+       <!-- JSON Error Script for Add Student -->
+       <script id="form-errors-json" type="application/json">
+        {{ form.errors | tojson }}
+    </script>
+
+    <!-- JSON Error Script for Update Student -->
+    <script id="update-form-errors-json" type="application/json">
+        {{ update_form.errors | tojson }}
+    </script>
 </body>
 </html>

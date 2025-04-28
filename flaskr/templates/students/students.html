@@ -4,52 +4,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Students List</title>
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
+<style>
+    /* Hide the hidden original_id input in the update form */
+    #original_id, #original-id {
+        display: none !important;
+    }
+</style>
 <body>
-    <h2>Students List</h2>
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="navbar-left">
+                <a href="{{ url_for('main_page') }}">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+                </a>
+            </div>
+            <div class="navbar-right">
+                <a href="{{ url_for('students_page.students') }}">Students</a>
+                <a href="{{ url_for('colleges_page.colleges') }}">Colleges</a>
+                <a href="{{ url_for('courses_page.courses') }}">Courses</a>
+            </div>
+        </nav>
+        
+        <h1 class="page-name">Students List</h1>
 
-    <!-- Search Form -->
-    <form id="search-form" method="GET">
-        <input type="text" name="search" placeholder="Search students..." value="{{ request.args.get('search', '') }}">
-        <select name="field">
-            <option value="id">ID</option>
-            <option value="first_name">First Name</option>
-            <option value="last_name">Last Name</option>
-            <option value="year_level">Year Level</option>
-            <option value="course_code">Course Code</option>
-            <option value="gender">Gender</option>
-        </select>
-        <button type="submit">Search</button>
-    </form>
+        <!-- Add Student Modal -->
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Add New Student</h2>
+                <form method="POST" action="{{ url_for('students_page.students') }}">
+                    {{ form.hidden_tag() }}
 
-    <!-- Add New Student -->
-    <button id="open-modal-btn">Add Student</button>
-
-    <!-- Add Student Modal -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Add New Student</h2>
-            <form method="POST" action="{{ url_for('students_page.students') }}">
-                {{ form.hidden_tag() }}
-                {% for field in form if field.name != 'submit' %}
                     <div>
-                        {{ field.label }}<br>
-                        {{ field }}<br>
-                        {% for error in field.errors %}
-                            <span class="error">{{ error }}</span><br>
-                        {% endfor %}
+                        {{ form.id.label }}
+                        {{ form.id(
+                            id="id",
+                            autocomplete="off",
+                            pattern="^\d{4}-\d{4}$",
+                            title="ID must be in the format YYYY-NNNN (e.g., 2023-1234)",
+                            required=True
+                        ) }}
                     </div>
-                {% endfor %}
-                <div>{{ form.submit }}</div>
-            </form>
+                    
+                    <div>
+                        {{ form.first_name.label }}
+                        {{ form.first_name(id="first-name") }}
+                        <small id="first-name-hint" class="hint-text">Auto-formatting name...</small>
+                    </div>
+                    <div>
+                        {{ form.last_name.label }}
+                        {{ form.last_name(id="last-name") }}
+                        <small id="last-name-hint" class="hint-text">Auto-formatting name...</small>
+                    </div>
+                    <div>
+                        {{ form.year_level.label }}
+                        {{ form.year_level(id="year-level", type="number", min="1", max="10") }}
+                    </div>
+                    <div>
+                        {{ form.course_code.label }}
+                        <input 
+                            type="text"
+                            id="course-code"
+                            name="{{ form.course_code.name }}"
+                            list="course-codes"
+                            value="{{ form.course_code.data or '' }}"
+                            required
+                            pattern="^({{ course_codes | join('|') }})$"
+                            title="The couse code does not exist. Please add it first."
+                            autocomplete="off"
+                            oninvalid="this.setCustomValidity('Please select a valid course code.')"
+                            oninput="this.setCustomValidity('')">
+                            
+                        <datalist id="course-codes">
+                            {% for code in course_codes %}
+                                <option value="{{ code }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    
+                    <div>
+                        {{ form.gender.label }}
+                        {{ form.gender(id="gender") }}
+                    </div>
+                    <div>
+                        {{ form.submit }}
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="notifications">
                 {% for category, message in messages %}
@@ -57,11 +109,33 @@
                 {% endfor %}
             </div>
         {% endif %}
-    {% endwith %}
+        {% endwith %}
 
-    <!-- Students Table -->
-    <table>
-        <thead>
+        <div class="table-controls">
+            <form id="search-form" method="GET" class="search-section">
+                <input id="search-input" class="search-bar search-input" type="text" name="search" placeholder="Search students..." value="{{ request.args.get('search', '') }}">
+                
+                <select id="search-field" class="search-select" name="search-field">
+                    <option value="id">ID</option>
+                    <option value="first_name">First Name</option>
+                    <option value="last_name">Last Name</option>
+                    <option value="year_level">Year Level</option>
+                    <option value="course_code">Course Code</option>
+                    <option value="gender">Gender</option>
+                </select>
+                
+                <button id="search-button" class="custom-btn" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+                
+            </form>
+        
+            <button id="open-modal-btn" class="custom-btn" >Add Student</button>
+        </div>
+
+        <!-- Students Table -->
+        <table>
+        <thead id="table-head">
             <tr>
                 <th>ID</th>
                 <th>First Name</th>
@@ -72,7 +146,7 @@
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="table-body">
             {% for student in students %}
             <tr>
                 <td>{{ student[0] }}</td>
@@ -83,7 +157,7 @@
                 <td>{{ student[5] }}</td>
                 <td>
                     <!-- Update Button -->
-                    <button class="update-btn"
+                    <button class="update-btn custom-btn" data-entity="student"
                             data-id="{{ student[0] }}"
                             data-first_name="{{ student[1] }}"
                             data-last_name="{{ student[2] }}"
@@ -92,70 +166,91 @@
                             data-gender="{{ student[5] }}">
                         <i class="fas fa-edit"></i>
                     </button>
+                
 
-                    <!-- Delete Button -->
-                    <form method="POST" action="{{ url_for('students_page.delete_student', id=student[0]) }}" style="display:inline;">
-                        {{ form.hidden_tag() }}
-                        <button type="submit" onclick="return confirm('Are you sure you want to delete this student?')">
-                            <i class="fas fa-trash-alt" style="color:red;"></i>
+                    <form action="{{ url_for('students_page.delete_student', id=student[0]) }}" method="post" class="delete-form" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="custom-btn btn-outline-danger delete-btn">
+                            <i class="fa fa-trash text-danger" style="color:red;" ></i>
                         </button>
                     </form>
+
                 </td>
+                
             </tr>
             {% endfor %}
         </tbody>
-    </table>
+        </table>
 
-    <!-- Shared Update Modal -->
-    <div id="updateStudentModal" class="modal">
-        <div class="modal-content">
-            <span class="close-update">&times;</span>
-            <h2>Update Student</h2>
-            <form method="POST" action="{{ url_for('students_page.update_students') }}">
-                {{ update_form.hidden_tag() }}
 
-                <div>
-                    {{ update_form.id.label }}
-                    {{ update_form.id(id="update-id-display", readonly=True) }}
-                </div>
-                <div>
-                    {{ update_form.first_name.label }}
-                    {{ update_form.first_name(id="update-first-name") }}
-                </div>
-                <div>
-                    {{ update_form.last_name.label }}
-                    {{ update_form.last_name(id="update-last-name") }}
-                </div>
-                <div>
-                    {{ update_form.year_level.label }}
-                    {{ update_form.year_level(id="update-year-level", type="number", min="1", max="10") }}
-                </div>
-                <div>
-                    {{ update_form.course_code.label }}
-                    <input 
-                        type="text"
-                        id="update-course-code"
-                        name="{{ update_form.course_code.name }}"
-                        list="update-course-codes"
-                        value="{{ update_form.course_code.data or '' }}"
-                        required>
-                    <datalist id="update-course-codes">
-                        {% for code in course_codes %}
-                            <option value="{{ code }}">
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div>
-                    {{ update_form.gender.label }}
-                    {{ update_form.gender(id="update-gender") }}
-                </div>
-                <div>
-                    {{ update_form.submit }}
-                </div>
-            </form>
+ 
+        <!-- Update Modal -->
+        <div id="updateStudentModal" class="modal">
+            <div class="modal-content">
+                <span class="close-update">&times;</span>
+                <h2>Update Student</h2>
+                <form method="POST" action="{{ url_for('students_page.update_students') }}">
+                    {{ update_form.csrf_token }}
+                    {{ update_form.original_id(id="original-id") }}
+
+
+                    <div>
+                        {{ update_form.id.label }}
+                        {{ update_form.id(
+                            id="update-id",
+                            autocomplete="off",
+                            pattern="^\d{4}-\d{4}$",
+                            title="ID must be in the format YYYY-NNNN (e.g., 2023-1234)",
+                            required=True
+                        ) }}
+                    </div>
+                    
+                    <div>
+                        {{ update_form.first_name.label }}
+                        {{ update_form.first_name(id="update-first-name") }}
+                        <small id="first-name-hint" class="hint-text">Auto-formatting name...</small>
+                    </div>
+                    <div>
+                        {{ update_form.last_name.label }}
+                        {{ update_form.last_name(id="update-last-name") }}
+                        <small id="last-name-hint" class="hint-text">Auto-formatting name...</small>
+                    </div>
+                    <div>
+                        {{ update_form.year_level.label }}
+                        {{ update_form.year_level(id="update-year-level", type="number", min="1", max="10") }}
+                    </div>
+                    <div>
+                        {{ update_form.course_code.label }}
+                        <input 
+                            type="text"
+                            id="update-course-code"
+                            name="{{ update_form.course_code.name }}"
+                            list="update-course-codes"
+                            value="{{ update_form.course_code.data or '' }}"
+                            required
+                            pattern="^({{ course_codes | join('|') }})$"
+                            title="The couse code does not exist. Please add it first."
+                            autocomplete="off"
+                            oninvalid="this.setCustomValidity('Please select a valid course code.')"
+                            oninput="this.setCustomValidity('')">
+                            
+                        <datalist id="update-course-codes">
+                            {% for code in course_codes %}
+                                <option value="{{ code }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    
+                    <div>
+                        {{ update_form.gender.label }}
+                        {{ update_form.gender(id="update-gender") }}
+                    </div>
+                    <div>
+                        {{ update_form.submit }}
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
-</html>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>

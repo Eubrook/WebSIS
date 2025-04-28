@@ -3,44 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Student Information System</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        .tab { display: inline-block; padding: 10px; cursor: pointer; border: 1px solid #ccc; }
-        .tab:hover { background-color: #f0f0f0; }
-        .tab-content { display: none; padding: 20px; border: 1px solid #ccc; }
-        .active { display: block; }
-    </style>
+    <title>Student Information System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 </head>
 <body>
-    <h1>Web Student Information System</h1>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo" alt="Logo">
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/students">Students</a>
+            <a href="/courses">Courses</a>
+            <a href="/colleges">Colleges</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <img src="{{ url_for('static', filename='images/logo2.png') }}" class="hero-logo" alt="Logo">
+        <h1>Student Information System</h1>
+        <p>Manage students, courses, and colleges easily.</p>
+    </section>
+
+    <!-- Dashboard Cards -->
+    <section class="dashboard">
+        <a href="/students" style="text-decoration: none; color: inherit;">
+            <div class="card">
+                <h2>{{ total_students }}</h2>
+                <p>Students</p>
+            </div>
+        </a>
     
-    <div>
-      <a href="{{ url_for('students') }}" class="tab">Student</a>
-      <a href="{{ url_for('colleges') }}" class="tab">College</a>
-      <a href="{{ url_for('courses') }}" class="tab">Courses</a>
-    </div>
+        <a href="/courses" style="text-decoration: none; color: inherit;">
+            <div class="card">
+                <h2>{{ total_courses }}</h2>
+                <p>Courses</p>
+            </div>
+        </a>
     
-    <div id="student" class="tab-content active">
-        <h2>Student Information</h2>
-        <p>Details about students go here.</p>
-    </div>
-    <div id="college" class="tab-content">
-        <h2>College Information</h2>
-        <p>Details about colleges go here.</p>
-    </div>
-    <div id="courses" class="tab-content">
-        <h2>Course Information</h2>
-        <p>Details about courses go here.</p>
-    </div>
+        <a href="/colleges" style="text-decoration: none; color: inherit;">
+            <div class="card">
+                <h2>{{ total_colleges }}</h2>
+                <p>Colleges</p>
+            </div>
+        </a>
+    </section>
     
-    <script>
-        function showTab(tabId) {
-            var contents = document.querySelectorAll('.tab-content');
-            contents.forEach(content => content.classList.remove('active'));
-            
-            document.getElementById(tabId).classList.add('active');
-        }
-    </script>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2025 Student Information System</p>
+    </footer>
+
 </body>
 </html>
