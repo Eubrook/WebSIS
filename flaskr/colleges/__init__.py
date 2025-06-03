@@ -43,7 +43,6 @@ def colleges():
 
     return render_template('colleges/colleges.html', colleges=colleges, form=form, update_form=update_form, )
 
-
 @colleges_page.route('/search_colleges', methods=['GET'])
 def search_colleges():
     query = request.args.get('query', '').strip()
