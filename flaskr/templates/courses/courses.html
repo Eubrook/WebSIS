@@ -142,9 +142,7 @@
                     </button>
                     
                     <form action="{{ url_for('courses_page.delete_course', course_code=course[0]) }}" method="post" class="delete-form" style="display:inline;">
-                        <!-- <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> -->
-                         <input type="hidden" name="csrf_token" value="${currentCsrfToken}">
-
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="button" class="custom-btn btn-outline-danger delete-btn">
                             <i class="fa fa-trash text-danger" style="color:red;" ></i>
                         </button>

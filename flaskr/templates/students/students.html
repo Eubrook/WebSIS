@@ -235,18 +235,30 @@
             {% endfor %}
         </tbody>
         </table>
-                            <!-- Pagination controls -->
                 <div id="students-pagination" class="pagination-container">
-                <button id="students-prev" disabled class="pagination-btn">
+                <a href="{{ url_for('students_page.students', page=page-1 if page > 1 else 1, rows=rows_per_page) }}" 
+                    class="pagination-btn {% if page == 1 %}disabled{% endif %}" 
+                    aria-disabled="{{ 'true' if page == 1 else 'false' }}">
                     <i class="fas fa-chevron-left"></i>
-                </button>
+                </a>
 
-                <span id="students-page-info" class="pagination-info">Page 1 of 10</span>
+                {# Optional: page buttons #}
+                {% for p in range(1, total_pages + 1) %}
+                    <a href="{{ url_for('students_page.students', page=p, rows=rows_per_page) }}" 
+                    class="pagination-btn {% if p == page %}active{% endif %}">
+                    {{ p }}
+                    </a>
+                {% endfor %}
 
-                <button id="students-next" class="pagination-btn">
+                <a href="{{ url_for('students_page.students', page=page+1 if page < total_pages else total_pages, rows=rows_per_page) }}" 
+                    class="pagination-btn {% if page == total_pages %}disabled{% endif %}" 
+                    aria-disabled="{{ 'true' if page == total_pages else 'false' }}">
                     <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
+                </a>
+
+                <span id="students-page-info" class="pagination-info">Page {{ page }} of {{ total_pages }}</span>
+                </div>
+
 
         </div>
 

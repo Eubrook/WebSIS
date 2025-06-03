@@ -704,100 +704,15 @@ function performSearch(query, field, exact = false) {
             }
         });
 
- function setupPaginationWithComboBox(containerId, rowsPerPageInputId, paginationId) {
-    const container = document.getElementById(containerId);
-    const tbody = container.querySelector('#table-body');
-    const pagination = document.getElementById(paginationId);
-    const rowsPerPageInput = document.getElementById(rowsPerPageInputId);
 
-    const rows = tbody.querySelectorAll('tr');
-    const totalRows = rows.length;
+document.getElementById('students-rows-per-page').addEventListener('change', (e) => {
+  let rows = parseInt(e.target.value);
+  if (!rows || rows < 1) rows = 10;  // fallback default
 
-    let rowsPerPage = parseInt(rowsPerPageInput.value) || 10;
-    let totalPages = Math.ceil(totalRows / rowsPerPage);
-    let currentPage = 1;
+  // Get current URL and update query params
+  const url = new URL(window.location.href);
+  url.searchParams.set('rows', rows);
+  url.searchParams.set('page', 1); // reset to first page
 
-    function showPage(page) {
-        currentPage = page;
-        let start = (page - 1) * rowsPerPage;
-        let end = start + rowsPerPage;
-
-        rows.forEach((row, i) => {
-            row.style.display = (i >= start && i < end) ? '' : 'none';
-        });
-
-        pagination.innerHTML = '';
-        for (let i = 1; i <= totalPages; i++) {
-            const btn = document.createElement('button');
-            btn.textContent = i;
-            btn.classList.add('page-btn');
-            if (i === currentPage) btn.classList.add('active');
-
-            btn.addEventListener('click', () => showPage(i));
-            pagination.appendChild(btn);
-        }
-    }
-
-    function updateRowsPerPage(newRowsPerPage) {
-        if (!newRowsPerPage || newRowsPerPage < 1) return;
-        rowsPerPage = newRowsPerPage;
-        totalPages = Math.ceil(totalRows / rowsPerPage);
-        if (currentPage > totalPages) currentPage = totalPages || 1;
-        showPage(currentPage);
-    }
-
-    rowsPerPageInput.addEventListener('input', () => {
-        const val = parseInt(rowsPerPageInput.value);
-        if (!val || val < 1) return;
-        updateRowsPerPage(val);
-    });
-
-    // Initial call to show first page
-    showPage(1);
-}
-
-// Call the function for all tables:
-setupPaginationWithComboBox('students-container', 'students-rows-per-page', 'students-pagination');
-setupPaginationWithComboBox('courses-container', 'courses-rows-per-page', 'courses-pagination');
-setupPaginationWithComboBox('colleges-container', 'colleges-rows-per-page', 'colleges-pagination');
-
-function updatePagination(totalRows, rowsPerPage, currentPage) {
-    const totalPages = Math.ceil(totalRows / rowsPerPage);
-    const paginationContainer = document.getElementById('students-pagination');
-
-    // Clear existing numbered buttons
-    const oldPageButtons = paginationContainer.querySelectorAll('.page-btn');
-    oldPageButtons.forEach(btn => btn.remove());
-
-    // Add new numbered page buttons
-    for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        btn.classList.add('page-btn');
-        if (i === currentPage) btn.classList.add('active');
-
-        btn.addEventListener('click', () => {
-            goToPage(i);  // Your function to go to that page
-        });
-
-        // Insert after previous button and before next button
-        paginationContainer.insertBefore(btn, document.getElementById('students-next'));
-        paginationContainer.insertBefore(btn, document.getElementById('colleges-next'));
-        paginationContainer.insertBefore(btn, document.getElementById('courses-next'));
-    }
-
-    // Disable prev/next if at edge
-    document.getElementById('students-prev').disabled = currentPage === 1;
-    document.getElementById('students-next').disabled = currentPage === totalPages;
-
-    document.getElementById('courses-prev').disabled = currentPage === 1;
-    document.getElementById('courses-next').disabled = currentPage === totalPages;
-
-    document.getElementById('colleges-prev').disabled = currentPage === 1;
-    document.getElementById('colleges-next').disabled = currentPage === totalPages;
-
-    // Update page info
-    document.getElementById('students-page-info').textContent = `Page ${currentPage} of ${totalPages}`;
-    document.getElementById('courses-page-info').textContent = `Page ${currentPage} of ${totalPages}`;
-    document.getElementById('colleges-page-info').textContent = `Page ${currentPage} of ${totalPages}`;
-}
+  window.location.href = url.toString();
+});

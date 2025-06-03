@@ -114,7 +114,7 @@
 
                     <form action="{{ url_for('colleges_page.delete_college', college_code=college[0]) }}" method="post" class="delete-form" style="display:inline;">
                         <!-- <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> -->
-                        <input type="hidden" name="csrf_token" value="${currentCsrfToken}">    
+                        <input type="hidden" name="csrf_token" value="{{ form.csrf_token }}">    
                         <button type="button" class="custom-btn btn-outline-danger delete-btn">
                             <i class="fa fa-trash text-danger" style="color:red;" ></i>
                         </button>
