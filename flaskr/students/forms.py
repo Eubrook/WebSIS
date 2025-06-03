@@ -5,6 +5,18 @@ from wtforms.validators import DataRequired, NumberRange
 from datetime import datetime
 from flaskr import mysql
 
+# Define file size validator outside the classes for reuse
+def file_size_limit(max_size_mb):
+    max_bytes = max_size_mb * 1024 * 1024
+    def _file_size_limit(form, field):
+        if field.data:
+            field.data.stream.seek(0, 2)  # seek to end of file
+            file_size = field.data.stream.tell()
+            field.data.stream.seek(0)     # reset pointer
+            if file_size > max_bytes:
+                raise ValidationError(f'File size must be less than {max_size_mb} MB.')
+    return _file_size_limit
+
 class AddStudentForm(FlaskForm):
     id = StringField('ID', validators=[DataRequired()])
     first_name = StringField('First Name', validators=[DataRequired()])
@@ -13,11 +25,8 @@ class AddStudentForm(FlaskForm):
         DataRequired(), NumberRange(min=1, max=10, message="Year level must be between 1 and 10")])
     course_code = StringField('Course Code', validators=[DataRequired()])
     gender = SelectField('Gender', choices=[('Male', 'Male'), ('Female', 'Female')], validators=[DataRequired()])
-    prof_pic = FileField('Profile Picture')
+    prof_pic = FileField('Profile Picture', validators=[file_size_limit(2)])  # 2 MB limit
     submit = SubmitField('Add Student')
-
-    # This attribute will be set dynamically if duplicate name found
-    name_duplicate_warning = False
 
     def validate_id(self, field):
         # 1. Validate pattern
@@ -47,20 +56,17 @@ class AddStudentForm(FlaskForm):
         if result[0] == 0:
             raise ValidationError("Course code does not exist. Please add it first.")
 
-    def validate_first_name(self, field):
-        last_name = self.last_name.data
 
-        cur = mysql.connection.cursor()
-        cur.execute("""
-            SELECT COUNT(*) FROM students 
-            WHERE first_name = %s AND last_name = %s
-        """, (field.data, last_name))
-        result = cur.fetchone()
-        cur.close()
-
-        if result[0] > 0:
-            # Set flag instead of raising error, to handle warning in your view/template
-            self.name_duplicate_warning = True
+    def file_size_limit(max_size_mb):
+        max_bytes = max_size_mb * 1024 * 1024
+        def _file_size_limit(form, field):
+            if field.data:
+                field.data.stream.seek(0, 2)  # seek to end of file
+                file_size = field.data.stream.tell()
+                field.data.stream.seek(0)     # reset pointer
+                if file_size > max_bytes:
+                    raise ValidationError(f'File size must be less than {max_size_mb} MB.')
+        return _file_size_limit
 
 
 class UpdateStudentForm(FlaskForm):
@@ -72,10 +78,8 @@ class UpdateStudentForm(FlaskForm):
         DataRequired(), NumberRange(min=1, max=10, message="Year level must be between 1 and 10")])
     course_code = StringField('Course Code', validators=[DataRequired()])
     gender = SelectField('Gender', choices=[('Male', 'Male'), ('Female', 'Female')], validators=[DataRequired()])
-    prof_pic = FileField('Profile Picture')
+    prof_pic = FileField('Profile Picture', validators=[file_size_limit(2)])  # 2 MB limit
     submit = SubmitField('Update Student')
-
-    name_duplicate_warning = False
 
     def validate_id(self, field):
         pattern = r'^\d{4}-\d{4}$'

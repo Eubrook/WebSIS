@@ -18,6 +18,28 @@ document.addEventListener("DOMContentLoaded", function () {
         performSearch(searchInput.value.trim(), fieldSelect.value);
     });
 
+        resultsTableBody.addEventListener('click', function(event) {
+        const button = event.target.closest('.delete-btn');
+        if (button) {
+            const form = button.closest('form');
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+    });
+
 
         // Detect entity from current URL
     function getEntityFromPath() {
@@ -601,28 +623,6 @@ function performSearch(query, field, exact = false) {
     });
 
 
-// --------- Delete sweetalert
-    const deleteButtons = document.querySelectorAll('.delete-btn');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const form = button.closest('form');
-
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "This action cannot be undone.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
-        });
-    });
 
     // Handle preview and upload logic
     function handleProfilePicChange(inputId, previewId) {
@@ -704,100 +704,99 @@ function performSearch(query, field, exact = false) {
             }
         });
 
- function setupPaginationWithComboBox(containerId, rowsPerPageInputId, paginationId) {
-    const container = document.getElementById(containerId);
-    const tbody = container.querySelector('#table-body');
-    const pagination = document.getElementById(paginationId);
-    const rowsPerPageInput = document.getElementById(rowsPerPageInputId);
 
-    const rows = tbody.querySelectorAll('tr');
-    const totalRows = rows.length;
+document.getElementById('students-rows-per-page').addEventListener('change', (e) => {
+  let rows = parseInt(e.target.value);
+  if (!rows || rows < 1) rows = 10;  // fallback default
 
-    let rowsPerPage = parseInt(rowsPerPageInput.value) || 10;
-    let totalPages = Math.ceil(totalRows / rowsPerPage);
-    let currentPage = 1;
+  // Get current URL and update query params
+  const url = new URL(window.location.href);
+  url.searchParams.set('rows', rows);
+  url.searchParams.set('page', 1); // reset to first page
 
-    function showPage(page) {
-        currentPage = page;
-        let start = (page - 1) * rowsPerPage;
-        let end = start + rowsPerPage;
+  window.location.href = url.toString();
+});
 
-        rows.forEach((row, i) => {
-            row.style.display = (i >= start && i < end) ? '' : 'none';
-        });
+document.addEventListener("DOMContentLoaded", function () {
+    const MAX_FILE_SIZE_MB = 2;
+    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
-        pagination.innerHTML = '';
-        for (let i = 1; i <= totalPages; i++) {
-            const btn = document.createElement('button');
-            btn.textContent = i;
-            btn.classList.add('page-btn');
-            if (i === currentPage) btn.classList.add('active');
+    function showNotification(form, message) {
+        // Check if notification div exists, else create it
+        let notif = form.querySelector(".file-size-notif");
+        if (!notif) {
+            notif = document.createElement("div");
+            notif.className = "file-size-notif";
+            notif.style.color = "red";
+            notif.style.marginTop = "0.5em";
+            notif.style.fontWeight = "bold";
+            form.appendChild(notif);
+        }
+        notif.textContent = message;
+    }
 
-            btn.addEventListener('click', () => showPage(i));
-            pagination.appendChild(btn);
+    function clearNotification(form) {
+        const notif = form.querySelector(".file-size-notif");
+        if (notif) {
+            notif.textContent = "";
         }
     }
 
-    function updateRowsPerPage(newRowsPerPage) {
-        if (!newRowsPerPage || newRowsPerPage < 1) return;
-        rowsPerPage = newRowsPerPage;
-        totalPages = Math.ceil(totalRows / rowsPerPage);
-        if (currentPage > totalPages) currentPage = totalPages || 1;
-        showPage(currentPage);
+    function validateFileSize(event) {
+        const form = event.target;
+        const fileInput = form.querySelector('input[type="file"][name="prof_pic"]');
+
+        if (fileInput && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                event.preventDefault();
+                showNotification(form, `Profile picture must be less than ${MAX_FILE_SIZE_MB}MB.`);
+            } else {
+                clearNotification(form);
+            }
+        } else {
+            clearNotification(form);
+        }
     }
 
-    rowsPerPageInput.addEventListener('input', () => {
-        const val = parseInt(rowsPerPageInput.value);
-        if (!val || val < 1) return;
-        updateRowsPerPage(val);
-    });
+    const addForm = document.getElementById("add-student-form");
+    const updateForm = document.getElementById("update-student-form");
 
-    // Initial call to show first page
-    showPage(1);
-}
-
-// Call the function for all tables:
-setupPaginationWithComboBox('students-container', 'students-rows-per-page', 'students-pagination');
-setupPaginationWithComboBox('courses-container', 'courses-rows-per-page', 'courses-pagination');
-setupPaginationWithComboBox('colleges-container', 'colleges-rows-per-page', 'colleges-pagination');
-
-function updatePagination(totalRows, rowsPerPage, currentPage) {
-    const totalPages = Math.ceil(totalRows / rowsPerPage);
-    const paginationContainer = document.getElementById('students-pagination');
-
-    // Clear existing numbered buttons
-    const oldPageButtons = paginationContainer.querySelectorAll('.page-btn');
-    oldPageButtons.forEach(btn => btn.remove());
-
-    // Add new numbered page buttons
-    for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        btn.classList.add('page-btn');
-        if (i === currentPage) btn.classList.add('active');
-
-        btn.addEventListener('click', () => {
-            goToPage(i);  // Your function to go to that page
-        });
-
-        // Insert after previous button and before next button
-        paginationContainer.insertBefore(btn, document.getElementById('students-next'));
-        paginationContainer.insertBefore(btn, document.getElementById('colleges-next'));
-        paginationContainer.insertBefore(btn, document.getElementById('courses-next'));
+    if (addForm) {
+        addForm.addEventListener("submit", validateFileSize);
     }
 
-    // Disable prev/next if at edge
-    document.getElementById('students-prev').disabled = currentPage === 1;
-    document.getElementById('students-next').disabled = currentPage === totalPages;
+    if (updateForm) {
+        updateForm.addEventListener("submit", validateFileSize);
+    }
+});
 
-    document.getElementById('courses-prev').disabled = currentPage === 1;
-    document.getElementById('courses-next').disabled = currentPage === totalPages;
 
-    document.getElementById('colleges-prev').disabled = currentPage === 1;
-    document.getElementById('colleges-next').disabled = currentPage === totalPages;
-
-    // Update page info
-    document.getElementById('students-page-info').textContent = `Page ${currentPage} of ${totalPages}`;
-    document.getElementById('courses-page-info').textContent = `Page ${currentPage} of ${totalPages}`;
-    document.getElementById('colleges-page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+const errorBox = document.getElementById("file-error");
+if (errorBox) {
+    errorBox.innerText = `Profile picture must be less than ${MAX_FILE_SIZE_MB}MB.`;
+    errorBox.classList.remove("d-none");
 }
+
+
+function clearAddProfilePic() {
+    const input = document.getElementById('add-profile-pic-input');
+    const preview = document.getElementById('add-profile-pic-preview');
+    input.value = '';
+    preview.src = "{{ url_for('static', filename='images/default-avatar.png') }}";
+}
+
+function clearUpdateProfilePic() {
+    const input = document.getElementById('update-profile-pic-input');
+    const preview = document.getElementById('update-profile-pic-preview');
+    input.value = '';
+    preview.src = "{{ url_for('static', filename='images/default-avatar.png') }}";
+
+    // Signal to backend to delete the old picture
+    document.getElementById('clear-update-pic-flag').value = '1';
+}
+
+  window.onload = function() {
+    var modal = new bootstrap.Modal(document.getElementById('updateStudentModal'));
+    modal.show();
+  }

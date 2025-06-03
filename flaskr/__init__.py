@@ -3,8 +3,9 @@ from flask_wtf.csrf import CSRFProtect
 from flask_mysqldb import MySQL
 from flaskr.mysql__init__ import create_db
 from flask_bootstrap import Bootstrap
+from flask import current_app
 from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, SECRET_KEY, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_API_UPLOAD_PRESET 
-# BOOTSTRAP_SERVE_LOCAL
+
 
 
 

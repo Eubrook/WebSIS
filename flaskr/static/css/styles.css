@@ -559,3 +559,39 @@ input:invalid, select:invalid {
 #students-next:hover {
   background-color: #e0e0e0;
 }
+
+
+.profile-upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.profile-pic-preview {
+  height: 80px;
+  width: 80px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+}
+
+input[type="file"] {
+  flex-grow: 1;
+  cursor: pointer;
+}
+
+.clear-profile-pic {
+  background-color: #f44336; /* red */
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: 600;
+}
+
+.clear-profile-pic:hover {
+  background-color: #d32f2f;
+}

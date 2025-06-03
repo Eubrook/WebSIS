@@ -29,3 +29,5 @@ class UpdateCollegeForm(FlaskForm):
         cur.close()
         if result[0] > 0 and field.data != self.original_college_code.data:
             raise ValidationError("College code already exists.")
+
+

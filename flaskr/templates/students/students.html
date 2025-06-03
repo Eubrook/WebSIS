@@ -38,15 +38,23 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Add New Student</h2>
-                <form method="POST" action="{{ url_for('students_page.students') }}" enctype="multipart/form-data">
+                <form id="add-student-form" method="POST" enctype="multipart/form-data" action="{{ url_for('students') }}">
+
                     {{ form.hidden_tag() }}
 
                     <div class="profile-upload">
-                        <img id="add-profile-pic-preview" src="{{ url_for('static', filename='images/default-avatar.png') }}"class="profile-pic-preview" alt="Profile Picture Preview">
+                        <img id="add-profile-pic-preview" src="{{ url_for('static', filename='images/default-avatar.png') }}" class="profile-pic-preview" alt="Profile Picture Preview">
                         <input type="file" id="add-profile-pic-input" name="prof_pic" accept="image/*">
+                        <button type="button" class="clear-profile-pic" onclick="clearAddProfilePic()">Clear</button>
+                        {% if form.prof_pic.errors %}
+                            <ul class="form-errors">
+                                {% for error in form.prof_pic.errors %}
+                                    <li style="color: red;">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
-                    
-                    
+                             
                     <div>
                         {{ form.id.label }}
                         {{ form.id(
@@ -235,18 +243,30 @@
             {% endfor %}
         </tbody>
         </table>
-                            <!-- Pagination controls -->
                 <div id="students-pagination" class="pagination-container">
-                <button id="students-prev" disabled class="pagination-btn">
+                <a href="{{ url_for('students_page.students', page=page-1 if page > 1 else 1, rows=rows_per_page) }}" 
+                    class="pagination-btn {% if page == 1 %}disabled{% endif %}" 
+                    aria-disabled="{{ 'true' if page == 1 else 'false' }}">
                     <i class="fas fa-chevron-left"></i>
-                </button>
+                </a>
 
-                <span id="students-page-info" class="pagination-info">Page 1 of 10</span>
+                {# Optional: page buttons #}
+                {% for p in range(1, total_pages + 1) %}
+                    <a href="{{ url_for('students_page.students', page=p, rows=rows_per_page) }}" 
+                    class="pagination-btn {% if p == page %}active{% endif %}">
+                    {{ p }}
+                    </a>
+                {% endfor %}
 
-                <button id="students-next" class="pagination-btn">
+                <a href="{{ url_for('students_page.students', page=page+1 if page < total_pages else total_pages, rows=rows_per_page) }}" 
+                    class="pagination-btn {% if page == total_pages %}disabled{% endif %}" 
+                    aria-disabled="{{ 'true' if page == total_pages else 'false' }}">
                     <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
+                </a>
+
+                <span id="students-page-info" class="pagination-info">Page {{ page }} of {{ total_pages }}</span>
+                </div>
+
 
         </div>
 
@@ -256,7 +276,8 @@
             <div class="modal-content">
                 <span class="close-update">&times;</span>
                 <h2>Update Student</h2>
-                <form method="POST" action="{{ url_for('students_page.update_students') }}" enctype="multipart/form-data">
+                <form id="update-student-form" method="POST" enctype="multipart/form-data" action="{{ url_for('students_page.update_students') }}">
+
                     {{ update_form.csrf_token }}
                     {{ update_form.original_id(id="original-id") }}
                     {% for error in update_form.id.errors %}
@@ -266,8 +287,18 @@
                     <div class="profile-upload">
                         <img id="update-profile-pic-preview" src="{{ url_for('static', filename='images/default-avatar.png') }}" class="profile-pic-preview" alt="Profile Picture Preview">
                         <input type="file" id="update-profile-pic-input" name="prof_pic" accept="image/*">
+                        <button type="button" class="clear-profile-pic" onclick="clearUpdateProfilePic()">Clear</button>
+                        <input type="hidden" id="clear-update-pic-flag" name="clear_prof_pic" value="0">
+
+                        {% if update_form.prof_pic.errors %}
+                            <ul class="form-errors">
+                                {% for error in update_form.prof_pic.errors %}
+                                    <li style="color: red;">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
-                    
+
                     <div>
                         {{ update_form.id.label }}
                         {{ update_form.id(
@@ -369,5 +400,7 @@
             </div>
         </div>
 
-
+<script>
+  const csrfToken = "{{ csrf_token() }}";
+</script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
