@@ -164,6 +164,16 @@
 
         <!-- Students Table -->
             <div id="students-container">
+            <label for="students-rows-per-page">Rows per page:</label>
+            <input id="students-rows-per-page" list="rows-per-page-options" type="number" min="1" style="width: 80px;" placeholder="10">
+            <datalist id="rows-per-page-options">
+                <option value="10">
+                <option value="20">
+                <option value="30">
+                <option value="40">
+                <option value="50">
+            </datalist>
+
         <table>
         <thead id="table-head">
             <tr>
@@ -225,6 +235,19 @@
             {% endfor %}
         </tbody>
         </table>
+                            <!-- Pagination controls -->
+                <div id="students-pagination" class="pagination-container">
+                <button id="students-prev" disabled class="pagination-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+
+                <span id="students-page-info" class="pagination-info">Page 1 of 10</span>
+
+                <button id="students-next" class="pagination-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
         </div>
 
  
