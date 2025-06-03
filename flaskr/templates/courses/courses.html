@@ -115,8 +115,8 @@
         <button id="open-modal-btn" class="custom-btn">Add Course</button>
         </div>
 
-            
-
+        
+        <div id="courses-container">
     <table>
         <thead id="table-head">
             <tr>
@@ -126,7 +126,7 @@
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody id="table-body">
+        <tbody id="table-body" class="courses-table-body">
             {% for course in courses %}
             <tr>
                 <td>{{ course[0] }}</td>
@@ -142,17 +142,19 @@
                     </button>
                     
                     <form action="{{ url_for('courses_page.delete_course', course_code=course[0]) }}" method="post" class="delete-form" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> -->
+                         <input type="hidden" name="csrf_token" value="${currentCsrfToken}">
+
                         <button type="button" class="custom-btn btn-outline-danger delete-btn">
                             <i class="fa fa-trash text-danger" style="color:red;" ></i>
                         </button>
-                    </form>
-                                      
-                    
+                    </form>  
+                </td>             
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
     <!-- Shared Update Modal -->
     <div id="updateCourseModal" class="modal">
         <div class="modal-content">

@@ -90,7 +90,7 @@
         <button id="open-modal-btn" class="custom-btn">Add College</button>
         </div>
 
-        
+            <div id="colleges-container">
     <table>
         <thead id="table-head">
             <tr>
@@ -100,7 +100,7 @@
    
             </tr>
         </thead>
-        <tbody id="table-body">
+        <tbody id="table-body" class="colleges-table-body">
             {% for college in colleges %}
             <tr>
                 <td>{{ college[0] }}</td>
@@ -113,21 +113,19 @@
                     </button>
 
                     <form action="{{ url_for('colleges_page.delete_college', college_code=college[0]) }}" method="post" class="delete-form" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> -->
+                        <input type="hidden" name="csrf_token" value="${currentCsrfToken}">    
                         <button type="button" class="custom-btn btn-outline-danger delete-btn">
                             <i class="fa fa-trash text-danger" style="color:red;" ></i>
                         </button>
-                    </form>
-                            
-                    
-                      
-                  </td>  
-                
+                    </form>     
+                  </td>      
             </tr>
+            
             {% endfor %}
         </tbody>
     </table>
-     
+     </div>
 
         <!-- Update College Modal -->
         <div id="updateCollegeModal" class="modal">

@@ -7,59 +7,61 @@ import cloudinary
 import cloudinary.uploader
 
 
-students_page = Blueprint('students_page', __name__)
 
+students_page = Blueprint('students_page', __name__)
 
 @students_page.route('/students', methods=['GET', 'POST'])
 def students():
     cur = mysql.connection.cursor()
 
-    # Get all course codes
+    # Get all course codes from DB for SelectFields
     cur.execute("SELECT course_code FROM courses")
     course_codes = [row[0] for row in cur.fetchall()]
 
     form = AddStudentForm()
     update_form = UpdateStudentForm()
+    
+    # Assign choices for SelectField
     form.course_code.choices = [(code, code) for code in course_codes]
     update_form.course_code.choices = [(code, code) for code in course_codes]
 
     if request.method == 'POST' and form.validate_on_submit():
-        student_id = form.id.data
-        first_name = form.first_name.data
-        last_name = form.last_name.data
+        student_id = form.id.data.strip()
+        first_name = form.first_name.data.strip()
+        last_name = form.last_name.data.strip()
         year_level = form.year_level.data
         course_code = form.course_code.data
         gender = form.gender.data
-        prof_pic = form.prof_pic.data
+        prof_pic_url = None
 
         # Handle file upload
         file = request.files.get('prof_pic')
         if file and file.filename != '':
-            print(f"File received: {file.filename}")
             upload_result = cloudinary.uploader.upload(file)
-            prof_pic = str(upload_result.get('secure_url'))
-            print(f"Cloudinary URL: {prof_pic}")  # Debugging the URL
+            prof_pic_url = upload_result.get('secure_url')
 
-
-
-        # Insert the student
+        # Insert into students table
         cur.execute("""
             INSERT INTO students (id, first_name, last_name, year_level, course_code, gender, prof_pic)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (student_id, first_name, last_name, year_level, course_code, gender, prof_pic))
+        """, (student_id, first_name, last_name, year_level, course_code, gender, prof_pic_url))
         mysql.connection.commit()
+        cur.close()
+
         flash('Student added successfully!', 'success')
         return redirect(url_for('students_page.students'))
 
-    # Handle GET (and search)
-    search_query = request.args.get('search', '')
+    # Handle GET or failed POST - search functionality
+    search_query = request.args.get('search', '').strip()
     field = request.args.get('field', 'id')
     allowed_fields = ['id', 'first_name', 'last_name', 'year_level', 'course_code', 'gender', 'prof_pic']
     if field not in allowed_fields:
         field = 'id'
 
     if search_query:
-        cur.execute(f"SELECT * FROM students WHERE {field} LIKE %s", ('%' + search_query + '%',))
+        # Parameterize query with field name validated before
+        sql = f"SELECT * FROM students WHERE {field} LIKE %s"
+        cur.execute(sql, ('%' + search_query + '%',))
     else:
         cur.execute("SELECT * FROM students")
 
@@ -68,28 +70,38 @@ def students():
 
     return render_template('students/students.html', students=students, form=form, update_form=update_form, course_codes=course_codes)
 
-
 @students_page.route('/search_students', methods=['GET'])
 def search_students():
     query = request.args.get('query', '').strip()
     field = request.args.get('field', '')
-    exact = request.args.get('exact', 'false').lower() == 'true'  # Convert to Boolean
+    exact = request.args.get('exact', 'false').lower() == 'true'
 
-    if not query or not field:
+    allowed_fields = ['id', 'first_name', 'last_name', 'year_level', 'course_code', 'gender', 'prof_pic']
+    if field not in allowed_fields or not query:
         return Response(json.dumps([]), mimetype='application/json')
 
     cur = mysql.connection.cursor()
 
-    # Exact match or partial match handling
-    if exact:
-        sql = f"SELECT id, first_name, last_name, year_level, course_code, gender FROM students WHERE {field} = %s"
-        params = (query,)
-    else:
-        sql = f"SELECT id, first_name, last_name, year_level, course_code, gender FROM students WHERE {field} LIKE %s"
-        params = (f"%{query}%",)
-
     try:
-        cur.execute(sql, params)
+        if exact:
+            sql = f"""
+                SELECT id, first_name, last_name, year_level, course_code, gender, prof_pic 
+                FROM students 
+                WHERE LOWER({field}) LIKE LOWER(%s) OR LOWER({field}) LIKE LOWER(%s)
+                ORDER BY {field} ASC
+            """
+            cur.execute(sql, (f"{query}%", f"% {query}%"))  # keep as is
+
+        else:
+            sql = f"""
+                SELECT id, first_name, last_name, year_level, course_code, gender, prof_pic 
+                FROM students 
+                WHERE LOWER({field}) LIKE LOWER(%s) OR LOWER({field}) LIKE LOWER(%s)
+                ORDER BY {field} ASC
+            """
+
+            cur.execute(sql, (f"{query}%", f"% {query}%"))
+
         students_data = cur.fetchall()
         cur.close()
 
@@ -101,20 +113,23 @@ def search_students():
                 'year_level': student[3],
                 'course_code': student[4],
                 'gender': student[5],
+                'prof_pic': student[6],
             }
             for student in students_data
         ]
 
         return Response(json.dumps(students_list), mimetype='application/json')
+
     except Exception as e:
-        print("Error:", e)
+        print("Error in search_students:", e)
         return Response("Error occurred", status=500)
+
 
 
 @students_page.route('/all_students', methods=['GET'])
 def all_students():
     cur = mysql.connection.cursor()
-    cur.execute("SELECT id, first_name, last_name, year_level, course_code, gender FROM students")
+    cur.execute("SELECT id, first_name, last_name, year_level, course_code, gender, prof_pic FROM students")
     students_data = cur.fetchall()
     cur.close()
 

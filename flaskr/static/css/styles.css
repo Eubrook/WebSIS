@@ -481,3 +481,81 @@ input:invalid, select:invalid {
     from { transform: scale(0.8); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
   }
+
+  .search-active .disable-during-search {
+    pointer-events: none;
+    opacity: 0.5; /* optional visual effect */
+}
+
+
+.pagination-container {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.pagination-btn {
+  background-color: #f1f3f5;
+  border: none;
+  border-radius: 50%;
+  padding: 0.5rem 0.7rem;
+  font-size: 1rem;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.table-container {
+  margin-bottom: 1rem; /* prevents table from hitting the bottom */
+  padding-bottom: 1rem;
+  position: relative;
+}
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.page-btn,
+#students-prev,
+#students-next {
+  border: none;
+  padding: 6px 10px;
+  background-color: #f0f0f0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.page-btn.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.page-btn:hover,
+#students-prev:hover,
+#students-next:hover {
+  background-color: #e0e0e0;
+}

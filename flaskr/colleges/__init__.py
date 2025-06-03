@@ -59,23 +59,29 @@ def colleges():
 def search_colleges():
     query = request.args.get('query', '').strip()
     field = request.args.get('field', '')
-    exact = request.args.get('exact', 'false').lower() == 'true'  # Convert to Boolean
+    exact = request.args.get('exact', 'false').lower() == 'true'
 
     if not query or not field:
         return Response(json.dumps([]), mimetype='application/json')
 
     cur = mysql.connection.cursor()
 
-    # Exact match or partial match handling
-    if exact:
-        sql = f"SELECT college_code, college_name FROM colleges WHERE {field} = %s"
-        params = (query,)
-    else:
-        sql = f"SELECT college_code, college_name FROM colleges WHERE {field} LIKE %s"
-        params = (f"%{query}%",)
-
     try:
-        cur.execute(sql, params)
+        if exact:
+            sql = f"""
+                SELECT college_code, college_name 
+                FROM colleges 
+                WHERE {field} = %s
+            """
+            cur.execute(sql, (query,))
+        else:
+            sql = f"""
+                SELECT college_code, college_name 
+                FROM colleges 
+                WHERE {field} LIKE %s OR {field} LIKE %s
+            """
+            cur.execute(sql, (f"{query}%", f"% {query}%"))
+
         colleges_data = cur.fetchall()
         cur.close()
 
@@ -87,12 +93,12 @@ def search_colleges():
             for college in colleges_data
         ]
 
-        print(colleges_list)
-
         return Response(json.dumps(colleges_list), mimetype='application/json')
+
     except Exception as e:
-        print("Error:", e)
+        print("Error in search_colleges:", e)
         return Response("Error occurred", status=500)
+
 
 
 

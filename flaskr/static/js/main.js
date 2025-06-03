@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
+      console.log("DOM fully loaded and parsed");
     // ================== Search Elements ==================
     const searchForm = document.getElementById('search-form');
     const searchInput = document.getElementById('search-input');
@@ -11,6 +12,22 @@ document.addEventListener("DOMContentLoaded", function () {
     //     // Silently skip if expected elements are not found on this page
     //     return;
     // } else {
+
+        searchForm.addEventListener("submit", function (e) {
+        e.preventDefault(); // Prevent full page reload
+        performSearch(searchInput.value.trim(), fieldSelect.value);
+    });
+
+
+        // Detect entity from current URL
+    function getEntityFromPath() {
+        const path = window.location.pathname;
+        if (path.includes("/students")) return "student";
+        if (path.includes("/courses")) return "course";
+        if (path.includes("/colleges")) return "college";
+        return "student"; // default fallback
+    }
+
         searchInput.addEventListener("input", function () {
             performSearch(searchInput.value, fieldSelect.value);
         });
@@ -22,56 +39,402 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        function performSearch(query, field, exact = false) {
-            let currentPath = window.location.pathname;
-            let endpoint = "/search_students"; // default
 
-            if (query === "") {
-                if (currentPath.includes("/courses")) {
-                    endpoint = "/all_courses";
-                } else if (currentPath.includes("/colleges")) {
-                    endpoint = "/all_colleges";
-                } else {
-                    endpoint = "/all_students";
-                }
+function performSearch(query, field, exact = false) {
+    const entity = getEntityFromPath();
+    let endpoint = "";
 
-                fetch(endpoint)
-                    .then(response => response.json())
-                    .then(data => renderResults(data, "No data available"))
-                    .catch(error => console.error("Error fetching all data:", error));
-
-                return;
-            }
-
-            if (currentPath.includes("/courses")) {
-                endpoint = "/search_courses";
-            } else if (currentPath.includes("/colleges")) {
-                endpoint = "/search_colleges";
-            }
-
-            fetch(`${endpoint}?query=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}&exact=${exact}`)
-                .then(response => response.json())
-                .then(data => renderResults(data, "No results found"))
-                .catch(error => console.error("Error fetching search results:", error));
+    // 🧹 If search input is cleared
+    if (!query.trim()) {
+        // Reset dropdown to default
+        if (fieldSelect) {
+            if (entity === "student") fieldSelect.value = "id";
+            else if (entity === "course") fieldSelect.value = "course_code";
+            else if (entity === "college") fieldSelect.value = "college_code";
         }
 
-        function renderResults(data, emptyMessage) {
-            resultsTableBody.innerHTML = "";
+        // Load all data for that entity
+        if (entity === "student") endpoint = "/all_students";
+        else if (entity === "course") endpoint = "/all_courses";
+        else if (entity === "college") endpoint = "/all_colleges";
 
-            if (data.length === 0) {
-                resultsTableBody.innerHTML = `<tr><td colspan="6">${emptyMessage}</td></tr>`;
-                return;
+        fetch(endpoint)
+            .then(res => res.json())
+            .then(data => renderResults(data, entity, "No data available"))
+            .catch(err => console.error("Error loading full dataset:", err));
+
+        return; // exit early
+    }
+
+    // Normal filtered search
+    if (entity === "student") endpoint = "/search_students";
+    else if (entity === "course") endpoint = "/search_courses";
+    else if (entity === "college") endpoint = "/search_colleges";
+
+    fetch(`${endpoint}?query=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}&exact=${exact}`)
+        .then(res => res.json())
+        .then(data => renderResults(data, entity, "No results found"))
+        .catch(err => console.error("Error fetching search results:", err));
+}
+
+    function renderResults(data, entity, emptyMessage) {
+        resultsTableBody.innerHTML = "";
+
+        if (!data.length) {
+            // colspan depends on entity
+            let colspan = 0;
+            if (entity === "student") colspan = 8;
+            else if (entity === "course") colspan = 4;
+            else if (entity === "college") colspan = 3;
+
+            resultsTableBody.innerHTML = `<tr><td colspan="${colspan}">${emptyMessage}</td></tr>`;
+            return;
+        }
+
+        data.forEach(row => {
+            let htmlRow = "<tr>";
+
+            if (entity === "student") {
+                // Assuming row keys: id, first_name, last_name, year_level, course_code, gender, photo_url
+                htmlRow += `<td>${row.id}</td>`;
+
+                // Photo cell
+                const photoSrc = row.prof_pic || '/static/images/default-avatar.png';
+
+                htmlRow += `<td><img src="${photoSrc}" alt="Profile Pic" class="profile-pic" style="height:50px; width:50px; object-fit:cover; border-radius:50%;"></td>`;
+
+                htmlRow += `<td>${row.first_name}</td>`;
+                htmlRow += `<td>${row.last_name}</td>`;
+                htmlRow += `<td>${row.year_level}</td>`;
+                htmlRow += `<td>${row.course_code}</td>`;
+                htmlRow += `<td>${row.gender}</td>`;
+
+                // Actions
+                htmlRow += `<td>
+                    <button class="update-btn custom-btn" data-entity="student"
+                            data-id="${row.id}"
+                            data-prof-pic="${photoSrc}"
+                            data-first_name="${row.first_name}"
+                            data-last_name="${row.last_name}"
+                            data-year_level="${row.year_level}"
+                            data-course_code="${row.course_code}"
+                            data-gender="${row.gender}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+
+                    <form action="/students/delete/${encodeURIComponent(row.id)}" method="post" class="delete-form" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="custom-btn btn-outline-danger delete-btn">
+                            <i class="fa fa-trash text-danger" style="color:red;"></i>
+                        </button>
+                    </form>
+                </td>`;
+            }
+            else if (entity === "course") {
+                // row keys: course_code, course_name, college_code
+                htmlRow += `<td>${row.course_code}</td>`;
+                htmlRow += `<td>${row.course_name}</td>`;
+                htmlRow += `<td>${row.college_code}</td>`;
+
+                htmlRow += `<td>
+                    <button class="update-btn custom-btn" data-entity="course"
+                            data-course-code="${row.course_code}"
+                            data-course-name="${row.course_name}"
+                            data-college-code="${row.college_code}">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    </button>
+
+                    <form action="/courses/delete/${encodeURIComponent(row.course_code)}" method="post" class="delete-form" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="custom-btn btn-outline-danger delete-btn">
+                            <i class="fa fa-trash text-danger" style="color:red;"></i>
+                        </button>
+                    </form>
+                </td>`;
+            }
+            else if (entity === "college") {
+                // row keys: college_code, college_name
+                htmlRow += `<td>${row.college_code}</td>`;
+                htmlRow += `<td>${row.college_name}</td>`;
+
+                htmlRow += `<td>
+                    <button class="update-btn custom-btn" data-entity="college"
+                            data-college-code="${row.college_code}"
+                            data-college-name="${row.college_name}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+
+                    <form action="/colleges/delete/${encodeURIComponent(row.college_code)}" method="post" class="delete-form" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="custom-btn btn-outline-danger delete-btn">
+                            <i class="fa fa-trash text-danger" style="color:red;"></i>
+                        </button>
+                    </form>
+                </td>`;
             }
 
-            data.forEach(row => {
-                let htmlRow = "<tr>";
-                for (let value of Object.values(row)) {
-                    htmlRow += `<td>${value}</td>`;
+            htmlRow += "</tr>";
+            resultsTableBody.innerHTML += htmlRow;
+  
+        });
+        attachButtonListeners();
+        attachDeleteListeners();
+    }
+
+
+
+    function attachButtonListeners() {
+        // Update buttons
+        const updateButtons = document.querySelectorAll('.update-btn');
+        const updateForm = document.querySelector('#updateStudentModal form');
+        const currentCsrfToken = "{{ csrf_token() }}";
+
+        updateButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const entity = button.dataset.entity;
+                const updateErrorScript = document.getElementById("update-form-errors-json");
+                let modal;
+
+                if (entity === 'student') {
+                    modal = document.getElementById('updateStudentModal');
+
+                    // Populate fields
+                    const id = button.dataset.id;
+                    const firstName = button.dataset.first_name;
+                    const lastName = button.dataset.last_name;
+                    const yearLevel = button.dataset.year_level;
+                    const courseCode = button.dataset.course_code;
+                    const gender = button.dataset.gender;
+                    const profPic = button.dataset.profPic;
+
+                    document.getElementById('update-id').value = id;
+                    document.getElementById('original-id').value = id;
+
+                    const updateFirstNameInput = document.getElementById('update-first-name');
+                    const updateLastNameInput = document.getElementById('update-last-name');
+
+                    updateFirstNameInput.value = firstName;
+                    updateLastNameInput.value = lastName;
+                    document.getElementById('update-year-level').value = yearLevel;
+                    document.getElementById('update-course-code').value = courseCode;
+                    document.getElementById('update-gender').value = gender;
+
+                    const preview = document.getElementById('update-profile-pic-preview');
+                    preview.src = profPic && profPic !== "None"
+                        ? (profPic.startsWith("http") ? profPic : `/static/uploads/${profPic}`)
+                        : "{{ url_for('static', filename='images/default-avatar.png') }}";
+
+                    // Auto-format name on blur
+                    updateFirstNameInput.addEventListener('blur', function () {
+                        if (this.value) {
+                            this.value = this.value
+                                .split(' ')
+                                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                .join(' ');
+                            showHint(this, "Auto-formatting first name...");
+                        }
+                    });
+
+                    updateLastNameInput.addEventListener('blur', function () {
+                        if (this.value) {
+                            this.value = this.value
+                                .split(' ')
+                                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                .join(' ');
+                            showHint(this, "Auto-formatting last name...");
+                        }
+                    });
+
+                } else if (entity === 'course') {
+                    modal = document.getElementById('updateCourseModal');
+                    document.getElementById('update-course-code').value = button.dataset.courseCode;
+                    document.getElementById('original-course-code').value = button.dataset.courseCode;
+                    document.getElementById('update-course-name').value = button.dataset.courseName;
+                    document.getElementById('update-college-code').value = button.dataset.collegeCode;
+
+                } else if (entity === 'college') {
+                    modal = document.getElementById('updateCollegeModal');
+                    document.getElementById('update-college-code').value = button.dataset.collegeCode;
+                    document.getElementById('original-college-code').value = button.dataset.collegeCode;
+                    document.getElementById('update-college-name').value = button.dataset.collegeName;
                 }
-                htmlRow += "</tr>";
-                resultsTableBody.innerHTML += htmlRow;
+
+                // Hide hidden fields visually (if needed)
+                if (modal) {
+                    const hiddenInputs = modal.querySelectorAll('input[type="hidden"]');
+                    hiddenInputs.forEach(input => {
+                        input.style.display = 'none';
+                    });
+                    modal.style.display = 'block';
+                }
+
+                // Re-open modal if errors are present after POST
+                if (updateErrorScript) {
+                    try {
+                        const updateFormErrors = JSON.parse(updateErrorScript.textContent);
+                        if (Object.keys(updateFormErrors).length > 0 && modal) {
+                            modal.style.display = "block";
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse update form errors JSON", e);
+                    }
+                }
             });
+        });
+    }
+
+    function attachDeleteListeners() {
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(button => {
+            // To avoid adding multiple listeners if this function runs multiple times,
+            // remove previous listener first (optional)
+            button.replaceWith(button.cloneNode(true));
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function () {
+            const form = button.closest('form');
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                form.submit();
+                }
+            });
+            });
+        });
         }
+
+     // ================== Update Modal ==================
+    const updateButtons = document.querySelectorAll('.update-btn');
+    const updateForm = document.querySelector('#updateStudentModal form');
+
+    updateButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const entity = button.dataset.entity;
+            const updateErrorScript = document.getElementById("update-form-errors-json");
+            let modal;
+
+            if (entity === 'student') {
+                modal = document.getElementById('updateStudentModal');
+
+                // Populate fields
+                const id = button.dataset.id;
+                const firstName = button.dataset.first_name;
+                const lastName = button.dataset.last_name;
+                const yearLevel = button.dataset.year_level;
+                const courseCode = button.dataset.course_code;
+                const gender = button.dataset.gender;
+                const profPic = button.dataset.profPic;
+
+                document.getElementById('update-id').value = id;
+                document.getElementById('original-id').value = id;
+
+                const updateFirstNameInput = document.getElementById('update-first-name');
+                const updateLastNameInput = document.getElementById('update-last-name');
+
+                updateFirstNameInput.value = firstName;
+                updateLastNameInput.value = lastName;
+                document.getElementById('update-year-level').value = yearLevel;
+                document.getElementById('update-course-code').value = courseCode;
+                document.getElementById('update-gender').value = gender;
+
+                const preview = document.getElementById('update-profile-pic-preview');
+                preview.src = profPic && profPic !== "None"
+                    ? (profPic.startsWith("http") ? profPic : `/static/uploads/${profPic}`)
+                    : "{{ url_for('static', filename='images/default-avatar.png') }}";
+
+                // Auto-format name on blur
+                updateFirstNameInput.addEventListener('blur', function () {
+                    if (this.value) {
+                        this.value = this.value
+                            .split(' ')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                            .join(' ');
+                        showHint(this, "Auto-formatting first name...");
+                    }
+                });
+
+                updateLastNameInput.addEventListener('blur', function () {
+                    if (this.value) {
+                        this.value = this.value
+                            .split(' ')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                            .join(' ');
+                        showHint(this, "Auto-formatting last name...");
+                    }
+                });
+
+            } else if (entity === 'course') {
+                modal = document.getElementById('updateCourseModal');
+                document.getElementById('update-course-code').value = button.dataset.courseCode;
+                document.getElementById('original-course-code').value = button.dataset.courseCode;
+                document.getElementById('update-course-name').value = button.dataset.courseName;
+                document.getElementById('update-college-code').value = button.dataset.collegeCode;
+
+            } else if (entity === 'college') {
+                modal = document.getElementById('updateCollegeModal');
+                document.getElementById('update-college-code').value = button.dataset.collegeCode;
+                document.getElementById('original-college-code').value = button.dataset.collegeCode;
+                document.getElementById('update-college-name').value = button.dataset.collegeName;
+            }
+
+            // Hide hidden fields visually (if needed)
+            if (modal) {
+                const hiddenInputs = modal.querySelectorAll('input[type="hidden"]');
+                hiddenInputs.forEach(input => {
+                    input.style.display = 'none';
+                });
+                modal.style.display = 'block';
+            }
+
+            // Re-open modal if errors are present after POST
+            if (updateErrorScript) {
+                try {
+                    const updateFormErrors = JSON.parse(updateErrorScript.textContent);
+                    if (Object.keys(updateFormErrors).length > 0 && modal) {
+                        modal.style.display = "block";
+                    }
+                } catch (e) {
+                    console.error("Failed to parse update form errors JSON", e);
+                }
+            }
+        });
+    });
+
+    // Close modal logic
+    document.querySelectorAll('.close-update').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('updateStudentModal').style.display = 'none';
+        });
+    });
+
+    window.addEventListener('click', (e) => {
+        const modal = document.getElementById('updateStudentModal');
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    // Optional hint function
+    function showHint(input, message) {
+        const hint = input.nextElementSibling;
+        if (hint && hint.classList.contains('hint-text')) {
+            hint.textContent = message;
+            setTimeout(() => hint.textContent = '', 2000);
+        }
+    }
+
+
+
         // ================== Add Modal ==================
         const modal = document.getElementById("modal");
         const openBtn = document.getElementById("open-modal-btn");
@@ -162,93 +525,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             console.warn("Modal elements not found on the page.");
         }
-
-        // ================== Update Modal ==================
-        const updateButtons = document.querySelectorAll('.update-btn');
-        const updateForm = document.querySelector('#updateStudentModal form');
-
-        updateButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                const entity = button.dataset.entity;
-                const updateErrorScript = document.getElementById("update-form-errors-json");
-                let modal;
-
-                if (entity === 'student') {
-                    modal = document.getElementById('updateStudentModal');
-                    document.getElementById('update-id').value = button.dataset.id;
-                    document.getElementById('original-id').value = button.dataset.id;
-                    const updateFirstNameInput = document.getElementById('update-first-name');
-                    const updateLastNameInput = document.getElementById('update-last-name');
-
-                    updateFirstNameInput.value = button.dataset.first_name;
-                    updateLastNameInput.value = button.dataset.last_name;
-                    document.getElementById('update-year-level').value = button.dataset.year_level;
-                    document.getElementById('update-course-code').value = button.dataset.course_code;
-                    document.getElementById('update-gender').value = button.dataset.gender;
-
-                    // Add auto-format for first and last name on blur (Update Modal)
-                    updateFirstNameInput.addEventListener('blur', function () {
-                        if (this.value) {
-                            this.value = this.value
-                                .split(' ')
-                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                .join(' ');
-                            showHint(this, "Auto-formatting first name...");
-                        }
-                    });
-
-                    updateLastNameInput.addEventListener('blur', function () {
-                        if (this.value) {
-                            this.value = this.value
-                                .split(' ')
-                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                .join(' ');
-                            showHint(this, "Auto-formatting last name...");
-                        }
-                    });
-
-                } else if (entity === 'course') {
-                    modal = document.getElementById('updateCourseModal');
-                    document.getElementById('update-course-code').value = button.dataset.courseCode;
-                    document.getElementById('original-course-code').value = button.dataset.courseCode;
-                    document.getElementById('update-course-name').value = button.dataset.courseName;
-                    document.getElementById('update-college-code').value = button.dataset.collegeCode;
-                } else if (entity === 'college') {
-                    modal = document.getElementById('updateCollegeModal');
-                    document.getElementById('update-college-code').value = button.dataset.collegeCode;
-                    document.getElementById('original-college-code').value = button.dataset.collegeCode;
-                    document.getElementById('update-college-name').value = button.dataset.collegeName;
-                }
-
-                // Hide hidden fields
-                if (modal) {
-                    const hiddenInputs = modal.querySelectorAll('input[type="hidden"]');
-                    hiddenInputs.forEach(input => {
-                        input.style.display = 'none';
-                    });
-                    modal.style.display = 'block';
-                }
-
-                // Handle update form errors
-                if (updateErrorScript) {
-                    try {
-                        const updateFormErrors = JSON.parse(updateErrorScript.textContent);
-                        if (Object.keys(updateFormErrors).length > 0) {
-                            const updateModal = document.getElementById("updateStudentModal");
-                            if (updateModal) {
-                                updateModal.style.display = "block";
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Failed to parse update form errors JSON", e);
-                    }
-                }
-            });
-        });
-
-
-
-
+        
 
     // ========== Attach form validation only ONCE ========== 
     if (updateForm) {
@@ -426,3 +703,101 @@ document.addEventListener("DOMContentLoaded", function () {
                 this.style.display = "none";
             }
         });
+
+ function setupPaginationWithComboBox(containerId, rowsPerPageInputId, paginationId) {
+    const container = document.getElementById(containerId);
+    const tbody = container.querySelector('#table-body');
+    const pagination = document.getElementById(paginationId);
+    const rowsPerPageInput = document.getElementById(rowsPerPageInputId);
+
+    const rows = tbody.querySelectorAll('tr');
+    const totalRows = rows.length;
+
+    let rowsPerPage = parseInt(rowsPerPageInput.value) || 10;
+    let totalPages = Math.ceil(totalRows / rowsPerPage);
+    let currentPage = 1;
+
+    function showPage(page) {
+        currentPage = page;
+        let start = (page - 1) * rowsPerPage;
+        let end = start + rowsPerPage;
+
+        rows.forEach((row, i) => {
+            row.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        pagination.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.classList.add('page-btn');
+            if (i === currentPage) btn.classList.add('active');
+
+            btn.addEventListener('click', () => showPage(i));
+            pagination.appendChild(btn);
+        }
+    }
+
+    function updateRowsPerPage(newRowsPerPage) {
+        if (!newRowsPerPage || newRowsPerPage < 1) return;
+        rowsPerPage = newRowsPerPage;
+        totalPages = Math.ceil(totalRows / rowsPerPage);
+        if (currentPage > totalPages) currentPage = totalPages || 1;
+        showPage(currentPage);
+    }
+
+    rowsPerPageInput.addEventListener('input', () => {
+        const val = parseInt(rowsPerPageInput.value);
+        if (!val || val < 1) return;
+        updateRowsPerPage(val);
+    });
+
+    // Initial call to show first page
+    showPage(1);
+}
+
+// Call the function for all tables:
+setupPaginationWithComboBox('students-container', 'students-rows-per-page', 'students-pagination');
+setupPaginationWithComboBox('courses-container', 'courses-rows-per-page', 'courses-pagination');
+setupPaginationWithComboBox('colleges-container', 'colleges-rows-per-page', 'colleges-pagination');
+
+function updatePagination(totalRows, rowsPerPage, currentPage) {
+    const totalPages = Math.ceil(totalRows / rowsPerPage);
+    const paginationContainer = document.getElementById('students-pagination');
+
+    // Clear existing numbered buttons
+    const oldPageButtons = paginationContainer.querySelectorAll('.page-btn');
+    oldPageButtons.forEach(btn => btn.remove());
+
+    // Add new numbered page buttons
+    for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.classList.add('page-btn');
+        if (i === currentPage) btn.classList.add('active');
+
+        btn.addEventListener('click', () => {
+            goToPage(i);  // Your function to go to that page
+        });
+
+        // Insert after previous button and before next button
+        paginationContainer.insertBefore(btn, document.getElementById('students-next'));
+        paginationContainer.insertBefore(btn, document.getElementById('colleges-next'));
+        paginationContainer.insertBefore(btn, document.getElementById('courses-next'));
+    }
+
+    // Disable prev/next if at edge
+    document.getElementById('students-prev').disabled = currentPage === 1;
+    document.getElementById('students-next').disabled = currentPage === totalPages;
+
+    document.getElementById('courses-prev').disabled = currentPage === 1;
+    document.getElementById('courses-next').disabled = currentPage === totalPages;
+
+    document.getElementById('colleges-prev').disabled = currentPage === 1;
+    document.getElementById('colleges-next').disabled = currentPage === totalPages;
+
+    // Update page info
+    document.getElementById('students-page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('courses-page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('colleges-page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+}

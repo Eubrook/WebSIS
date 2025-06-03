@@ -56,7 +56,16 @@
                             title="ID must be in the format YYYY-NNNN (e.g., 2023-1234)",
                             required=True
                         ) }}
+
+                        {% if form.id.errors %}
+                            <ul class="form-errors">
+                                {% for error in form.id.errors %}
+                                    <li style="color: red;">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
+
                     
                     <div>
                         {{ form.first_name.label }}
@@ -119,9 +128,7 @@
             <span class="close">&times;</span>
             <img class="modal-content" id="modalImage">
         </div>
-        >
         
-
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -156,6 +163,7 @@
         </div>
 
         <!-- Students Table -->
+            <div id="students-container">
         <table>
         <thead id="table-head">
             <tr>
@@ -169,7 +177,7 @@
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody id="table-body">
+        <tbody id="table-body" class="students-table-body">
             {% for student in students %}
             <tr>
                 <td>{{ student[0] }}</td>
@@ -188,10 +196,12 @@
                 <td>{{ student[4] }}</td>
                 <td>{{ student[5] }}</td>
                 <td>
+
                     <!-- Update Button -->
-                    <button class="update-btn custom-btn" data-entity="student"
+                    <button type="button" class="update-btn custom-btn"
+                            data-entity="student"
                             data-id="{{ student[0] }}"
-                            data-prof-pic = "{{ student[6] }}"
+                            data-prof-pic="{{ student[6] }}"
                             data-first_name="{{ student[1] }}"
                             data-last_name="{{ student[2] }}"
                             data-year_level="{{ student[3] }}"
@@ -199,12 +209,13 @@
                             data-gender="{{ student[5] }}">
                         <i class="fas fa-edit"></i>
                     </button>
-                
 
+                    <!-- Delete Button (inside form) -->
                     <form action="{{ url_for('students_page.delete_student', id=student[0]) }}" method="post" class="delete-form" style="display:inline;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="button" class="custom-btn btn-outline-danger delete-btn">
-                            <i class="fa fa-trash text-danger" style="color:red;" ></i>
+                        <button type="button" class="custom-btn btn-outline-danger delete-btn"
+                                data-id="{{ student[0] }}">
+                            <i class="fa fa-trash text-danger" style="color:red;"></i>
                         </button>
                     </form>
 
@@ -214,7 +225,7 @@
             {% endfor %}
         </tbody>
         </table>
-
+        </div>
 
  
         <!-- Update Modal -->
@@ -225,6 +236,9 @@
                 <form method="POST" action="{{ url_for('students_page.update_students') }}" enctype="multipart/form-data">
                     {{ update_form.csrf_token }}
                     {{ update_form.original_id(id="original-id") }}
+                    {% for error in update_form.id.errors %}
+                        <div style="color: red;">{{ error }}</div>
+                        {% endfor %}
                     
                     <div class="profile-upload">
                         <img id="update-profile-pic-preview" src="{{ url_for('static', filename='images/default-avatar.png') }}" class="profile-pic-preview" alt="Profile Picture Preview">
@@ -240,21 +254,50 @@
                             title="ID must be in the format YYYY-NNNN (e.g., 2023-1234)",
                             required=True
                         ) }}
+
+                         {% if update_form.id.errors %}
+                            <ul class="form-errors">
+                                {% for error in update_form.id.errors %}
+                                    <li style="color: red;">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
                     
                     <div>
                         {{ update_form.first_name.label }}
                         {{ update_form.first_name(id="update-first-name") }}
                         <small id="first-name-hint" class="hint-text">Auto-formatting name...</small>
+                        {% if update_form.first_name.errors %}
+                            <ul class="form-errors">
+                                {% for error in update_form.first_name.errors %}
+                                    <li style="color: red;">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
                     <div>
                         {{ update_form.last_name.label }}
                         {{ update_form.last_name(id="update-last-name") }}
                         <small id="last-name-hint" class="hint-text">Auto-formatting name...</small>
+                        {% if update_form.last_name.errors %}
+                            <ul class="form-errors">
+                                {% for error in update_form.last_name.errors %}
+                                    <li style="color: red;">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
                     <div>
                         {{ update_form.year_level.label }}
                         {{ update_form.year_level(id="update-year-level", type="number", min="1", max="10") }}
+                        {% if update_form.year_level.errors %}
+                        <ul class="form-errors">
+                            {% for error in update_form.year_level.errors %}
+                                <li style="color: red;">{{ error }}</li>
+                            {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
                     <div>
                         {{ update_form.course_code.label }}
@@ -276,11 +319,25 @@
                                 <option value="{{ code }}">
                             {% endfor %}
                         </datalist>
+                        {% if update_form.course_code.errors %}
+                            <ul class="form-errors">
+                                {% for error in update_form.course_code.errors %}
+                                    <li style="color: red;">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
                     
                     <div>
                         {{ update_form.gender.label }}
                         {{ update_form.gender(id="update-gender") }}
+                        {% if update_form.gender.errors %}
+                            <ul class="form-errors">
+                                {% for error in update_form.gender.errors %}
+                                    <li style="color: red;">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
                     <div>
                         {{ update_form.submit }}
