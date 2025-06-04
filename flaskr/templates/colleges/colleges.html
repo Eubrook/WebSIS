@@ -4,6 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Colleges List</title>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <!-- Link to external CSS file -->
         <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -113,12 +114,7 @@
                     </button>
 
                     <form action="{{ url_for('colleges_page.delete_college', college_code=college[0]) }}" method="post" class="delete-form" style="display:inline;">
-<<<<<<< HEAD
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> 
-=======
-                        <!-- <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> -->
-                        <input type="hidden" name="csrf_token" value="{{ form.csrf_token }}">    
->>>>>>> bf058318e3a281cf6d398bb4996dfb14726225ec
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">   
                         <button type="button" class="custom-btn btn-outline-danger delete-btn">
                             <i class="fa fa-trash text-danger" style="color:red;" ></i>
                         </button>

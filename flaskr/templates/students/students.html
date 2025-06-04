@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Students List</title>
-    
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -42,19 +42,23 @@
 
                     {{ form.hidden_tag() }}
 
-                    <div class="profile-upload">
-                        <img id="add-profile-pic-preview" src="{{ url_for('static', filename='images/default-avatar.png') }}" class="profile-pic-preview" alt="Profile Picture Preview">
-                        <input type="file" id="add-profile-pic-input" name="prof_pic" accept="image/*">
-                        <button type="button" class="clear-profile-pic" onclick="clearAddProfilePic()">Clear</button>
-                        {% if form.prof_pic.errors %}
-                            <ul class="form-errors">
-                                {% for error in form.prof_pic.errors %}
-                                    <li style="color: red;">{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-                             
+                <div class="profile-upload">
+                    <img id="add-profile-pic-preview" 
+                        src="{{ url_for('static', filename='images/default-avatar.png') }}" 
+                        class="profile-pic-preview" 
+                        alt="Profile Picture Preview">
+                    <input type="file" id="add-profile-pic-input" name="prof_pic" accept="image/*">
+                    <button type="button" class="clear-profile-pic" onclick="clearAddProfilePic()">Clear</button>
+
+                    {% if form.prof_pic.errors %}
+                        <ul class="form-errors">
+                            {% for error in form.prof_pic.errors %}
+                                <li style="color: red;">{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            
                     <div>
                         {{ form.id.label }}
                         {{ form.id(
