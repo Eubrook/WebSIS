@@ -20,7 +20,7 @@
         <!-- Navigation Bar -->
         <nav class="navbar">
             <div class="navbar-left">
-                <a href="{{ url_for('main_page') }}">
+                <a href="{{ url_for('main_page.home') }}">
                     <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
                 </a>
             </div>
@@ -38,7 +38,7 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Add New Student</h2>
-                <form id="add-student-form" method="POST" enctype="multipart/form-data" action="{{ url_for('students') }}">
+                <form id="add-student-form" method="POST" enctype="multipart/form-data" action="{{ url_for('students_page.students')}}">
 
                     {{ form.hidden_tag() }}
 
@@ -125,6 +125,13 @@
                 </form>
             </div>
         </div>
+
+        {% if form.errors %}
+        <script id="form-errors-json" type="application/json">
+        {{ form.errors | tojson }}
+        </script>
+        {% endif %}
+
 
                 <!-- Profile Picture Modal -->
         <div id="profile-pic-modal" class="modal" style="display:none;">
@@ -403,6 +410,12 @@
                 </form>
             </div>
         </div>
+
+        {% if update_form.errors %}
+            <script id="update-form-errors-json" type="application/json">
+            {{ update_form.errors | tojson }}
+            </script>
+            {% endif %}
 
 <script>
   const csrfToken = "{{ csrf_token() }}";

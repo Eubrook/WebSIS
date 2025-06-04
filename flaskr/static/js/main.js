@@ -842,3 +842,33 @@ async function refreshCsrfToken() {
   const data = await response.json();
   window.csrfToken = data.csrf_token;
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    // === Handle Add Form Errors ===
+    const addErrorScript = document.getElementById("form-errors-json");
+    if (addErrorScript) {
+        try {
+            const addFormErrors = JSON.parse(addErrorScript.textContent);
+            if (Object.keys(addFormErrors).length > 0) {
+                const addModal = document.getElementById("modal");
+                if (addModal) addModal.style.display = "block";
+            }
+        } catch (e) {
+            console.error("Error parsing add form errors JSON", e);
+        }
+    }
+
+    // === Handle Update Form Errors ===
+    const updateErrorScript = document.getElementById("update-form-errors-json");
+    if (updateErrorScript) {
+        try {
+            const updateFormErrors = JSON.parse(updateErrorScript.textContent);
+            if (Object.keys(updateFormErrors).length > 0) {
+                const updateModal = document.getElementById("updateStudentModal");
+                if (updateModal) updateModal.style.display = "block";
+            }
+        } catch (e) {
+            console.error("Error parsing update form errors JSON", e);
+        }
+    }
+});

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session, Response, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify
 import json
 from .forms import AddCourseForm, UpdateCourseForm
 from .models import (
@@ -50,8 +50,13 @@ def courses():
 
     courses = fetch_courses(search_query, field)
 
-    return render_template('courses/courses.html', courses=courses, form=form, update_form=update_form, college_codes=college_codes)
-
+    return render_template(
+        'courses/courses.html',
+        courses=courses,
+        form=form,
+        update_form=update_form,
+        college_codes=college_codes
+    )
 
 @courses_page.route('/search_courses', methods=['GET'])
 def search_courses():
@@ -73,7 +78,6 @@ def search_courses():
         print("Error:", e)
         return Response("Error occurred", status=500)
 
-
 @courses_page.route('/all_courses', methods=['GET'])
 def all_courses():
     results = fetch_courses()
@@ -83,13 +87,11 @@ def all_courses():
     ]
     return jsonify(courses_list)
 
-
 @courses_page.route('/courses/delete/<string:course_code>', methods=['POST'])
 def delete_course(course_code):
     delete_course_by_code(course_code)
     flash('Course deleted successfully!', 'success')
     return redirect(url_for('courses_page.courses'))
-
 
 @courses_page.route('/courses/update_courses', methods=['GET', 'POST'])
 def update_courses():

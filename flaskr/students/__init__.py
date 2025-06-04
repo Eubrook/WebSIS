@@ -1,17 +1,16 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify
-import json
-from .forms import AddStudentForm, UpdateStudentForm
-import cloudinary.uploader
-from . import models  
-from math import ceil
+from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify, current_app
 from flask_wtf.csrf import generate_csrf
+from math import ceil
+import cloudinary.uploader
 from cloudinary.uploader import upload
 from cloudinary.exceptions import Error as CloudinaryError
+from . import models
+from .forms import AddStudentForm, UpdateStudentForm
+import json
 
 students_page = Blueprint('students_page', __name__)
 
-
-@students_page.route('/students', methods=['GET', 'POST'])
+@students_page.route('/', methods=['GET', 'POST'])
 def students():
     course_codes = models.get_all_course_codes()
 
@@ -22,20 +21,12 @@ def students():
 
     if form.validate_on_submit():
         try:
-            # Default profile picture (Cloudinary URL or static fallback)
             prof_pic_url = url_for('static', filename='images/default-avatar.png')
-
-            # Check if a profile picture was uploaded
             file = request.files.get('prof_pic')
             if file and file.filename != '':
-                try:
-                    result = upload(file)
-                    prof_pic_url = result.get('secure_url')
-                except CloudinaryError as e:
-                    flash(f"Cloudinary error: {e}", 'error')
-                    return redirect(url_for('students_page.students'))
+                result = upload(file)
+                prof_pic_url = result.get('secure_url')
 
-            # Insert student into the database
             models.insert_student(
                 form.id.data.strip(),
                 form.first_name.data.strip(),
@@ -43,25 +34,19 @@ def students():
                 form.year_level.data,
                 form.course_code.data,
                 form.gender.data,
-                prof_pic_url  # Cloudinary URL or default avatar
+                prof_pic_url
             )
 
             flash('Student added successfully!', 'success')
             return redirect(url_for('students_page.students'))
 
+        except CloudinaryError as e:
+            flash(f"Cloudinary error: {e}", 'error')
         except Exception as e:
-            flash(f'Error adding student: {e}', 'error')
+            flash(f"Error adding student: {e}", 'error')
 
-    # Pagination and search
     page = request.args.get('page', 1, type=int)
-    rows_per_page = request.args.get('rows', 10)
-    try:
-        rows_per_page = int(rows_per_page)
-        if rows_per_page < 1:
-            rows_per_page = 10
-    except ValueError:
-        rows_per_page = 10
-
+    rows_per_page = request.args.get('rows', 10, type=int)
     search_query = request.args.get('search', '')
     field = request.args.get('field', 'id')
 
@@ -83,8 +68,6 @@ def students():
         search_query=search_query,
         field=field
     )
-
-
 
 @students_page.route('/search_students', methods=['GET'])
 def search_students():
@@ -111,7 +94,6 @@ def search_students():
         print("Error in search_students:", e)
         return Response("Error occurred", status=500)
 
-
 @students_page.route('/all_students', methods=['GET'])
 def all_students():
     students_data = models.get_students()
@@ -129,14 +111,13 @@ def all_students():
     ]
     return Response(json.dumps(students_list), mimetype='application/json')
 
-
-@students_page.route('/students/delete/<id>', methods=['POST'])
+@students_page.route('/delete/<id>', methods=['POST'])
 def delete_student(id):
     models.delete_student(id)
     flash('Student deleted successfully!', 'success')
     return redirect(url_for('students_page.students'))
 
-@students_page.route('/students/update_students', methods=['GET', 'POST'])
+@students_page.route('/update_students', methods=['GET', 'POST'])
 def update_students():
     course_codes = models.get_all_course_codes()
 
@@ -145,16 +126,8 @@ def update_students():
     add_form.course_code.choices = [(code, code) for code in course_codes]
     update_form.course_code.choices = [(code, code) for code in course_codes]
 
-    # Get pagination and search info early
     page = request.args.get('page', 1, type=int)
-    rows_per_page = request.args.get('rows', 10)
-    try:
-        rows_per_page = int(rows_per_page)
-        if rows_per_page < 1:
-            rows_per_page = 10
-    except ValueError:
-        rows_per_page = 10
-
+    rows_per_page = request.args.get('rows', 10, type=int)
     search_query = request.args.get('search', '')
     field = request.args.get('field', 'id')
 
@@ -201,7 +174,6 @@ def update_students():
         else:
             flash('Error updating student.', 'error')
 
-    # Fetch paginated & searched students
     offset = (page - 1) * rows_per_page
     total_students = models.get_students_count(search_query, field)
     total_pages = ceil(total_students / rows_per_page) if rows_per_page else 1
@@ -220,40 +192,24 @@ def update_students():
         field=field
     )
 
-
-
-
 @students_page.route('/upload_profile', methods=['POST'])
 def upload_profile():
     file = request.files.get('profile_picture')
     if file:
         upload_result = cloudinary.uploader.upload(file)
-        prof_pic = str(upload_result.get('secure_url'))
-        image_url = upload_result['secure_url']
-        public_id = upload_result['public_id']
-
-        # Save image_url and public_id to database here if needed
-
         flash("Profile picture uploaded successfully!", "success")
         return redirect(url_for('your_profile_view'))
-
     flash("No file uploaded.", "error")
     return redirect(url_for('your_profile_view'))
-
 
 @students_page.route('/delete_profile_picture/<string:cloudinary_id>', methods=['POST'])
 def delete_profile_picture(cloudinary_id):
     try:
         cloudinary.uploader.destroy(cloudinary_id)
-
-        # Remove reference in database here if needed
-
         flash("Profile picture deleted successfully.", "success")
     except Exception as e:
         flash(f"Error deleting image: {str(e)}", "danger")
-
     return redirect(url_for('your_profile_view'))
-
 
 @students_page.route('/get_csrf_token') 
 def get_csrf_token():
