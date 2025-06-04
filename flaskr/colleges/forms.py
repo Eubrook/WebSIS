@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, HiddenField, ValidationError
 from wtforms.validators import DataRequired
-from flaskr import mysql
+from .models import college_exists  # Import the model function instead of using mysql directly
 
 class AddCollegeForm(FlaskForm):
     college_code = StringField('College Code', validators=[DataRequired()])
@@ -9,11 +9,7 @@ class AddCollegeForm(FlaskForm):
     submit = SubmitField('Add College')
 
     def validate_college_code(self, field):
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT COUNT(*) FROM colleges WHERE college_code = %s", (field.data,))
-        result = cur.fetchone()
-        cur.close()
-        if result[0] > 0:
+        if college_exists(field.data):
             raise ValidationError("College code already exists.")
 
 class UpdateCollegeForm(FlaskForm):
@@ -23,11 +19,6 @@ class UpdateCollegeForm(FlaskForm):
     submit = SubmitField('Update College')
 
     def validate_college_code(self, field):
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT COUNT(*) FROM colleges WHERE college_code = %s", (field.data,))
-        result = cur.fetchone()
-        cur.close()
-        if result[0] > 0 and field.data != self.original_college_code.data:
+        # Allow same value as original but not if already used by another
+        if field.data != self.original_college_code.data and college_exists(field.data):
             raise ValidationError("College code already exists.")
-
-

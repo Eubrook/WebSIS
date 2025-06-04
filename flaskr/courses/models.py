@@ -73,3 +73,23 @@ def update_course(original_code, new_code, course_name, college_code):
     affected_rows = cur.rowcount
     cur.close()
     return affected_rows
+
+def is_course_name_duplicate(course_name, exclude_code=None):
+    cur = mysql.connection.cursor()
+    if exclude_code:
+        cur.execute("SELECT COUNT(*) FROM courses WHERE course_name = %s AND course_code != %s", (course_name, exclude_code))
+    else:
+        cur.execute("SELECT COUNT(*) FROM courses WHERE course_name = %s", (course_name,))
+    result = cur.fetchone()
+    cur.close()
+    return result[0] > 0
+
+def is_course_code_duplicate(course_code, exclude_code=None):
+    cur = mysql.connection.cursor()
+    if exclude_code:
+        cur.execute("SELECT COUNT(*) FROM courses WHERE course_code = %s AND course_code != %s", (course_code, exclude_code))
+    else:
+        cur.execute("SELECT COUNT(*) FROM courses WHERE course_code = %s", (course_code,))
+    result = cur.fetchone()
+    cur.close()
+    return result[0] > 0

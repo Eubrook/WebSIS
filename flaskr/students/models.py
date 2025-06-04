@@ -128,3 +128,18 @@ def student_exists(student_id):
     query = "SELECT 1 FROM students WHERE id = %s LIMIT 1"
     result = db.execute(query, (student_id,))
     return result.fetchone() is not None
+
+def student_id_exists(student_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT COUNT(*) FROM students WHERE id = %s", (student_id,))
+    result = cur.fetchone()
+    cur.close()
+    return result[0] > 0
+
+def course_code_exists(course_code):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT COUNT(*) FROM courses WHERE course_code = %s", (course_code,))
+    result = cur.fetchone()
+    cur.close()
+    return result[0] > 0
+
