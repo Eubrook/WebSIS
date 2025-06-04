@@ -53,4 +53,9 @@ def create_app():
     app.register_blueprint(colleges_page, url_prefix='/colleges')
     app.register_blueprint(courses_page, url_prefix='/courses')
 
+
+    for rule in app.url_map.iter_rules():
+        print(rule)
+
+
     return app

@@ -72,27 +72,35 @@ def students():
 @students_page.route('/search_students', methods=['GET'])
 def search_students():
     query = request.args.get('query', '').strip()
-    field = request.args.get('field', '')
+    field = request.args.get('field', 'id')
     exact = request.args.get('exact', 'false').lower() == 'true'
 
+    print("Request path:", request.path)
+    print("Search:", request.args.get("search"))
+    print("Search Field:", request.args.get("search-field"))
+
+    if not query or not field:
+        return Response(json.dumps([]), mimetype='application/json')
+
     try:
-        students_data = models.search_students(query, field, exact)
+        results = models.search_students(query, field, exact)
         students_list = [
             {
-                'id': student[0],
-                'first_name': student[1],
-                'last_name': student[2],
-                'year_level': student[3],
-                'course_code': student[4],
-                'gender': student[5],
-                'prof_pic': student[6]
+                'id': row[0],
+                'first_name': row[1],
+                'last_name': row[2],
+                'year_level': row[3],
+                'course_code': row[4],
+                'gender': row[5],
+                'prof_pic': row[6]
             }
-            for student in students_data
+            for row in results
         ]
         return Response(json.dumps(students_list), mimetype='application/json')
     except Exception as e:
         print("Error in search_students:", e)
         return Response("Error occurred", status=500)
+
 
 @students_page.route('/all_students', methods=['GET'])
 def all_students():

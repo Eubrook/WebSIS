@@ -62,6 +62,32 @@ def search_students(query, field, exact=False):
     cur.close()
     return results
 
+# def search_students(query, field, exact=False):
+#     allowed_fields = ['id', 'first_name', 'last_name', 'year_level', 'course_code', 'gender']
+#     if field not in allowed_fields or not query:
+#         return []
+
+#     cur = mysql.connection.cursor()
+#     if exact:
+#         sql = f"""
+#             SELECT id, first_name, last_name, year_level, course_code, gender, prof_pic
+#             FROM students
+#             WHERE {field} = %s
+#         """
+#         cur.execute(sql, (query,))
+#     else:
+#         sql = f"""
+#             SELECT id, first_name, last_name, year_level, course_code, gender, prof_pic
+#             FROM students
+#             WHERE {field} LIKE %s
+#         """
+#         cur.execute(sql, (f"%{query}%",))
+
+#     results = cur.fetchall()
+#     cur.close()
+#     return results if results else []
+
+
 
 def get_students(search_query='', field='id', limit=None, offset=0):
     cur = mysql.connection.cursor()

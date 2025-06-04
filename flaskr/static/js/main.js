@@ -76,9 +76,9 @@ function performSearch(query, field, exact = false) {
         }
 
         // Load all data for that entity
-        if (entity === "student") endpoint = "/all_students";
-        else if (entity === "course") endpoint = "/all_courses";
-        else if (entity === "college") endpoint = "/all_colleges";
+        if (entity === "student") endpoint = "/students/all_students";
+        else if (entity === "course") endpoint = "/courses/all_courses";
+        else if (entity === "college") endpoint = "/colleges/all_colleges";
 
         fetch(endpoint)
             .then(res => res.json())
@@ -88,10 +88,16 @@ function performSearch(query, field, exact = false) {
         return; // exit early
     }
 
+    // // Normal filtered search
+    // if (entity === "student") endpoint = "/search_students";
+    // else if (entity === "course") endpoint = "/search_courses";
+    // else if (entity === "college") endpoint = "/search_colleges";
+
     // Normal filtered search
-    if (entity === "student") endpoint = "/search_students";
-    else if (entity === "course") endpoint = "/search_courses";
-    else if (entity === "college") endpoint = "/search_colleges";
+    if (entity === "student") endpoint = "/students/search_students";
+    else if (entity === "course") endpoint = "/courses/search_courses";
+    else if (entity === "college") endpoint = "/colleges/search_colleges";
+
 
     fetch(`${endpoint}?query=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}&exact=${exact}`)
         .then(res => res.json())

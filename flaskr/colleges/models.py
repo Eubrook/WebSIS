@@ -117,6 +117,7 @@ def search_colleges_db(field, query, exact=False):
     return result
 
 
+
 def college_exists(college_code):
     cur = mysql.connection.cursor()
     cur.execute("SELECT COUNT(*) FROM colleges WHERE college_code = %s", (college_code,))

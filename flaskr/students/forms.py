@@ -1,5 +1,6 @@
 import re
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed
 from wtforms import StringField, IntegerField, SelectField, FileField, SubmitField, HiddenField
 from wtforms.validators import DataRequired, NumberRange, ValidationError
 from datetime import datetime
@@ -10,12 +11,16 @@ def file_size_limit(max_size_mb):
     max_bytes = max_size_mb * 1024 * 1024
     def _file_size_limit(form, field):
         if field.data:
-            field.data.stream.seek(0, 2)  # Move to end
-            file_size = field.data.stream.tell()
-            field.data.stream.seek(0)     # Reset
-            if file_size > max_bytes:
+            # field.data is a Werkzeug FileStorage object
+            file = field.data
+            file.seek(0, 2)  # Seek to end of file
+            size = file.tell()
+            file.seek(0)     # Reset pointer to start for later reading
+            if size > max_bytes:
                 raise ValidationError(f'File size must be less than {max_size_mb} MB.')
     return _file_size_limit
+
+ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png']
 
 class AddStudentForm(FlaskForm):
     id = StringField('ID', validators=[DataRequired()])
@@ -26,7 +31,10 @@ class AddStudentForm(FlaskForm):
     ])
     course_code = StringField('Course Code', validators=[DataRequired()])
     gender = SelectField('Gender', choices=[('Male', 'Male'), ('Female', 'Female')], validators=[DataRequired()])
-    prof_pic = FileField('Profile Picture', validators=[file_size_limit(2)])  # 2 MB
+    prof_pic = FileField('Profile Picture', validators=[
+    file_size_limit(2),
+    FileAllowed(ALLOWED_EXTENSIONS, 'Only image files with extensions jpg, jpeg, png are allowed.')
+    ])
     submit = SubmitField('Add Student')
 
     def validate_id(self, field):
@@ -59,7 +67,10 @@ class UpdateStudentForm(FlaskForm):
         DataRequired(), NumberRange(min=1, max=10, message="Year level must be between 1 and 10")])
     course_code = StringField('Course Code', validators=[DataRequired()])
     gender = SelectField('Gender', choices=[('Male', 'Male'), ('Female', 'Female')], validators=[DataRequired()])
-    prof_pic = FileField('Profile Picture', validators=[file_size_limit(2)])  # 2 MB limit
+    prof_pic = FileField('Profile Picture', validators=[
+    file_size_limit(2),
+    FileAllowed(ALLOWED_EXTENSIONS, 'Only image files with extensions jpg, jpeg, png are allowed.')
+    ])
     submit = SubmitField('Update Student')
 
     def validate_id(self, field):
