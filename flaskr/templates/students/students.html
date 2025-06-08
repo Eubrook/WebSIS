@@ -161,30 +161,31 @@
 
         <div class="table-controls">
             <form id="search-form" method="GET" class="search-section">
-                <input id="search-input" class="search-bar search-input" type="text" name="search" placeholder="Search students..." value="{{ request.args.get('search', '') }}">
+                <input id="search-input" class="search-bar search-input" type="text" name="search" placeholder="Search students..." value="{{ search_query }}">
                 
-                <select id="search-field" class="search-select" name="search-field">
-                    <option value="id">ID</option>
-                    <option value="first_name">First Name</option>
-                    <option value="last_name">Last Name</option>
-                    <option value="year_level">Year Level</option>
-                    <option value="course_code">Course Code</option>
-                    <option value="gender">Gender</option>
+                <select id="search-field" class="search-select" name="field">
+                    <option value="id" {% if field == 'id' %}selected{% endif %}>ID</option>
+                    <option value="first_name" {% if field == 'first_name' %}selected{% endif %}>First Name</option>
+                    <option value="last_name" {% if field == 'last_name' %}selected{% endif %}>Last Name</option>
+                    <option value="year_level" {% if field == 'year_level' %}selected{% endif %}>Year Level</option>
+                    <option value="course_code" {% if field == 'course_code' %}selected{% endif %}>Course Code</option>
+                    <option value="gender" {% if field == 'gender' %}selected{% endif %}>Gender</option>
                 </select>
-                
+
+                <input type="hidden" name="rows" value="{{ rows_per_page }}">
                 <button id="search-button" class="custom-btn" type="submit">
                     <i class="fas fa-search"></i>
                 </button>
-                
             </form>
+
         
             <button id="open-modal-btn" class="custom-btn" >Add Student</button>
         </div>
 
         <!-- Students Table -->
-            <div id="students-container">
+        <div id="students-container">
             <label for="students-rows-per-page">Rows per page:</label>
-            <input id="students-rows-per-page" list="rows-per-page-options" type="number" min="1" style="width: 80px;" placeholder="10">
+            <input id="students-rows-per-page" list="rows-per-page-options" type="number" name="rows" min="1" style="width: 80px;" placeholder="10" value="{{ rows_per_page }}">
             <datalist id="rows-per-page-options">
                 <option value="10">
                 <option value="20">
@@ -255,26 +256,24 @@
         </tbody>
         </table>
                 <div id="students-pagination" class="pagination-container">
-                <a href="{{ url_for('students_page.students', page=page-1 if page > 1 else 1, rows=rows_per_page) }}" 
+                    <a href="{{ url_for('students_page.students', page=page-1 if page > 1 else 1, rows=rows_per_page, search=search_query, field=field) }}" 
                     class="pagination-btn {% if page == 1 %}disabled{% endif %}" 
                     aria-disabled="{{ 'true' if page == 1 else 'false' }}">
                     <i class="fas fa-chevron-left"></i>
-                </a>
-
-                {# Optional: page buttons #}
-                {% for p in range(1, total_pages + 1) %}
-                    <a href="{{ url_for('students_page.students', page=p, rows=rows_per_page) }}" 
-                    class="pagination-btn {% if p == page %}active{% endif %}">
-                    {{ p }}
                     </a>
-                {% endfor %}
 
-                <a href="{{ url_for('students_page.students', page=page+1 if page < total_pages else total_pages, rows=rows_per_page) }}" 
+                    {% for p in range(1, total_pages + 1) %}
+                        <a href="{{ url_for('students_page.students', page=p, rows=rows_per_page, search=search_query, field=field) }}" 
+                        class="pagination-btn {% if p == page %}active{% endif %}">
+                        {{ p }}
+                        </a>
+                    {% endfor %}
+
+                    <a href="{{ url_for('students_page.students', page=page+1 if page < total_pages else total_pages, rows=rows_per_page, search=search_query, field=field) }}" 
                     class="pagination-btn {% if page == total_pages %}disabled{% endif %}" 
                     aria-disabled="{{ 'true' if page == total_pages else 'false' }}">
                     <i class="fas fa-chevron-right"></i>
-                </a>
-
+                    </a>
                 <span id="students-page-info" class="pagination-info">Page {{ page }} of {{ total_pages }}</span>
                 </div>
 

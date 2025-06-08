@@ -14,9 +14,20 @@ document.addEventListener("DOMContentLoaded", function () {
     // } else {
 
         searchForm.addEventListener("submit", function (e) {
-        e.preventDefault(); // Prevent full page reload
-        performSearch(searchInput.value.trim(), fieldSelect.value);
-    });
+            e.preventDefault();
+            const query = searchInput.value.trim();
+            const field = fieldSelect.value;
+            const rows = document.getElementById("students-rows-per-page").value || 10;
+
+            const url = new URL(window.location.href);
+            url.searchParams.set('search', query);
+            url.searchParams.set('field', field);
+            url.searchParams.set('rows', rows);
+            url.searchParams.set('page', 1);
+
+            window.location.href = url.toString();
+        });
+
 
         resultsTableBody.addEventListener('click', function(event) {
         const button = event.target.closest('.delete-btn');
@@ -719,15 +730,22 @@ function performSearch(query, field, exact = false) {
 
 document.getElementById('students-rows-per-page').addEventListener('change', (e) => {
   let rows = parseInt(e.target.value);
-  if (!rows || rows < 1) rows = 10;  // fallback default
+  if (!rows || rows < 1) rows = 10;
 
-  // Get current URL and update query params
   const url = new URL(window.location.href);
+
+  // Preserve search input and field
+  const searchInputVal = document.getElementById('search-input').value;
+  const searchFieldVal = document.getElementById('search-field').value;
+
   url.searchParams.set('rows', rows);
-  url.searchParams.set('page', 1); // reset to first page
+  url.searchParams.set('page', 1);
+  if (searchInputVal) url.searchParams.set('search', searchInputVal);
+  if (searchFieldVal) url.searchParams.set('field', searchFieldVal);
 
   window.location.href = url.toString();
 });
+
 
 document.addEventListener("DOMContentLoaded", function () {
     const MAX_FILE_SIZE_MB = 2;
